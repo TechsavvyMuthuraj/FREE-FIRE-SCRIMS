@@ -365,6 +365,17 @@ export async function saveSquadResults(matchId: string, results: any[]) {
   return true;
 }
 
+export async function linkSquadsToMatch(matchId: string, teamIds: string[]) {
+  const links = teamIds.map(tid => ({
+    match_id: matchId,
+    team_id: tid
+  }));
+
+  const { error } = await supabaseAdmin.from("match_squads").insert(links);
+  if (error) throw error;
+  return true;
+}
+
 export async function getSeasonLeaderboard() {
   const { data, error } = await supabaseAdmin
     .from("match_points")

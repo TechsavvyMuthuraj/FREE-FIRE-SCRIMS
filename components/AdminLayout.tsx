@@ -43,7 +43,26 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     <div className="admin-layout" id="page-admin">
       {/* SIDEBAR */}
       <div className="admin-sidebar" style={{ display: 'flex', flexDirection: 'column' }}>
-        <div style={{ padding: '0.5rem 1.5rem 1rem', fontFamily: 'var(--font-mono)', fontSize: '0.6rem', letterSpacing: '0.2em', color: 'var(--ff-muted)', textTransform: 'uppercase' }}>Navigation</div>
+        <div style={{ padding: '1.5rem 1.5rem 0.5rem' }}>
+          <Link href="/" style={{ 
+            display: 'inline-flex', 
+            alignItems: 'center', 
+            gap: '0.5rem', 
+            fontFamily: 'var(--font-mono)', 
+            fontSize: '0.65rem', 
+            letterSpacing: '0.1em', 
+            color: 'var(--ff-primary)', 
+            textDecoration: 'none',
+            fontWeight: 800,
+            padding: '0.5rem 0.75rem',
+            background: 'rgba(255, 140, 0, 0.1)',
+            borderRadius: '6px',
+            transition: 'all 0.2s'
+          }} className="back-website-btn">
+            ← BACK TO WEBSITE
+          </Link>
+        </div>
+        <div style={{ padding: '1.5rem 1.5rem 1rem', fontFamily: 'var(--font-mono)', fontSize: '0.6rem', letterSpacing: '0.2em', color: 'var(--ff-muted)', textTransform: 'uppercase' }}>Navigation</div>
         
         <Link href="/admin/dashboard" className={`sidebar-item ${pathname === "/admin/dashboard" ? "active" : ""}`}>
           <span className="sidebar-icon">◈</span> Overview
@@ -51,14 +70,29 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         <Link href="/admin/teams" className={`sidebar-item ${pathname === "/admin/teams" ? "active" : ""}`}>
           <span className="sidebar-icon">◉</span> Team Management
         </Link>
+        <Link href="/admin/schedule" className={`sidebar-item ${pathname === "/admin/schedule" ? "active" : ""}`}>
+          <span className="sidebar-icon">📅</span> Team Schedule
+        </Link>
+        <Link href="/admin/match-lists" className={`sidebar-item ${pathname === "/admin/match-lists" ? "active" : ""}`}>
+          <span className="sidebar-icon">📑</span> Team List Match
+        </Link>
         <Link href="/admin/matches" className={`sidebar-item ${pathname === "/admin/matches" ? "active" : ""}`}>
           <span className="sidebar-icon">◆</span> Match Control
         </Link>
-        <Link href="/admin/broadcast" className={`sidebar-item ${pathname === "/admin/broadcast" ? "active" : ""}`}>
-          <span className="sidebar-icon">◎</span> Email Broadcast
+        <Link href="/admin/results" className={`sidebar-item ${pathname === "/admin/results" ? "active" : ""}`}>
+          <span className="sidebar-icon">🏆</span> Season Rankings
+        </Link>
+        <Link href="/admin/audit" className={`sidebar-item ${pathname === "/admin/audit" ? "active" : ""}`}>
+          <span className="sidebar-icon">💰</span> Financial Audit
         </Link>
         <Link href="/admin/content" className={`sidebar-item ${pathname === "/admin/content" ? "active" : ""}`}>
           <span className="sidebar-icon">✎</span> Site Content
+        </Link>
+        <Link href="/admin/settings" className={`sidebar-item ${pathname === "/admin/settings" ? "active" : ""}`}>
+          <span className="sidebar-icon">⚙</span> Global Settings
+        </Link>
+        <Link href="/admin/payments" className={`sidebar-item ${pathname === "/admin/payments" ? "active" : ""}`}>
+          <span className="sidebar-icon">💳</span> Payment Settings
         </Link>
 
         {/* LOGOUT */}

@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Orbitron, Rajdhani, Share_Tech_Mono } from "next/font/google";
+import { Orbitron, Plus_Jakarta_Sans, Share_Tech_Mono } from "next/font/google";
 import Navbar from "@/components/Navbar";
 import "./globals.css";
 
@@ -8,10 +8,9 @@ const orbitron = Orbitron({
   variable: '--font-orbitron'
 });
 
-const rajdhani = Rajdhani({ 
-  weight: ['300', '400', '500', '600', '700'],
+const plusJakarta = Plus_Jakarta_Sans({ 
   subsets: ["latin"],
-  variable: '--font-rajdhani'
+  variable: '--font-jakarta'
 });
 
 const shareTechMono = Share_Tech_Mono({ 
@@ -21,7 +20,7 @@ const shareTechMono = Share_Tech_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "FF Scrims – Free Fire Tournament Platform",
+  title: "Demon X Scrims – Elite Free Fire Tournament Platform",
   description: "Register for premium Clash Squad and Battle Royale Free Fire Scrims.",
 };
 
@@ -31,9 +30,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body className={`${orbitron.variable} ${rajdhani.variable} ${shareTechMono.variable}`}>
-        <Navbar />
+    <html lang="en" className={`${orbitron.variable} ${plusJakarta.variable} ${shareTechMono.variable}`}>
+      <body>
         {children}
       </body>
     </html>

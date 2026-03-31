@@ -24,7 +24,7 @@ export default function Navbar() {
 
   return (
     <nav className="main-nav">
-      <Link href="/" className="nav-logo">FF SCRIMS</Link>
+      <Link href="/" className="nav-logo">DEMON X</Link>
       <ul className="nav-links">
         <li><a href="#tournaments" onClick={(e) => handleNavClick(e, 'tournaments')} className="nav-anchor">Tournaments</a></li>
         <li><a href="#prizes" onClick={(e) => handleNavClick(e, 'prizes')} className="nav-anchor">Prizes</a></li>

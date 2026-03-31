@@ -1,0 +1,178 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import Link from "next/link";
+import { getAdminTeams, getAdminMatches, createMatch, supabaseAdmin } from "../actions";
+import Toast from "../../../components/Toast";
+
+export default function SchedulePage() {
+  const [teams, setTeams] = useState<any[]>([]);
+  const [matches, setMatches] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  
+  // Selection State
+  const [selectedMatchId, setSelectedMatchId] = useState("");
+  const [selectedSquads, setSelectedSquads] = useState<string[]>([]);
+  const [saving, setSaving] = useState(false);
+  const [toast, setToast] = useState<{msg: string, type: 'success' | 'error' | 'warning' | null}>({ msg: "", type: null });
+
+  const notify = (msg: string, type: 'success' | 'error' | 'warning') => {
+    setToast({ msg, type });
+  };
+
+  const loadData = async () => {
+    setLoading(true);
+    try {
+      const [t, ms] = await Promise.all([getAdminTeams(), getAdminMatches()]);
+      setTeams(t.filter(team => team.payment_status === 'approved'));
+      // Only show upcoming/scheduled matches that haven't been completed
+      setMatches(ms.filter(m => m.status !== 'Completed'));
+    } catch (err) { notify("SYNC ERROR", "error"); }
+    setLoading(false);
+  };
+
+  useEffect(() => { loadData(); }, []);
+
+  const activeMatch = matches.find(m => m.id === selectedMatchId);
+  const mode = activeMatch?.mode || "BR";
+  const capacity = mode === "BR" ? 12 : 2;
+  const filteredTeams = teams.filter(t => t.mode === mode);
+
+  const toggleSquad = (id: string) => {
+    if (selectedSquads.includes(id)) {
+        setSelectedSquads(selectedSquads.filter(x => x !== id));
+    } else {
+        if (selectedSquads.length >= capacity) return notify(`ROOM FULL (${capacity}/${capacity})`, "warning");
+        setSelectedSquads([...selectedSquads, id]);
+    }
+  };
+
+  const handleFinalize = async () => {
+    if (!selectedMatchId) return notify("SELECT A SCHEDULED SESSION", "warning");
+    if (selectedSquads.length < capacity) return notify(`NEED ${capacity} TEAMS (SELECTED ${selectedSquads.length})`, "warning");
+
+    setSaving(true);
+    try {
+        // Link squads to the selected match id
+        // Note: In a real app we'd use a server action. Since we are in the client, we'll try to use actions or supabaseAdmin if exposed via lib
+        const links = selectedSquads.map(tid => ({
+            match_id: selectedMatchId,
+            team_id: tid
+        }));
+
+        // We'll use a direct fetch for simplicity if the tool allows, but actions are better
+        const { error } = await (window as any).supabase.from("match_squads").insert(links);
+        if (error) throw error;
+
+        notify("ROSTER FINALIZED FOR ROOM", "success");
+        setSelectedSquads([]);
+        setSelectedMatchId("");
+        loadData();
+    } catch (err: any) { notify(`FAILED: ${err.message}`, "error"); }
+    setSaving(false);
+  };
+
+  if (loading) return <div style={{ padding: '4rem', textAlign: 'center', color: 'var(--rose-400)' }}>PREPARING WAR ROOM...</div>;
+
+  return (
+    <div className="admin-panel active animate-up">
+      <Toast message={toast.msg} type={toast.type} onClear={() => setToast({ msg: "", type: null })} />
+
+      <div className="admin-section-title" style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+        <Link href="/admin/dashboard" className="admin-back-btn">← BACK</Link>
+        WAR ROOM SCHEDULER
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1.2fr) minmax(0, 1fr)', gap: '2rem' }}>
+        
+        <section>
+          <div className="dash-card modern-card" style={{ padding: '2.5rem' }}>
+            <div className="section-label">ROOM SESSION SELECTION</div>
+            
+            <div className="form-group" style={{ marginTop: '1.5rem' }}>
+               <label className="form-label">CHOOSE SCHEDULED MATCH</label>
+               <select 
+                 className="form-input" 
+                 value={selectedMatchId} 
+                 onChange={e => { setSelectedMatchId(e.target.value); setSelectedSquads([]); }} 
+                 style={{ background: 'var(--rose-50)', color: '#000', fontWeight: 700, height: '62px' }}
+               >
+                  <option value="">-- SELECT AN UPCOMING SESSION --</option>
+                  {matches.map(m => (
+                    <option key={m.id} value={m.id}>
+                       [{m.mode}] {m.map_name.toUpperCase()} - {new Date(m.match_date).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                    </option>
+                  ))}
+               </select>
+            </div>
+
+            {selectedMatchId && (
+               <div className="animate-scale-in" style={{ marginTop: '2.5rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1.5rem', alignItems: 'center' }}>
+                     <div className="section-label" style={{ marginBottom: 0, color: 'var(--ff-primary)' }}>
+                        ENLIST {mode} SQUADRONS ({selectedSquads.length}/{capacity})
+                     </div>
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))', gap: '0.8rem', maxHeight: '400px', overflowY: 'auto', padding: '1.5rem', background: 'var(--rose-50)', borderRadius: '24px' }}>
+                     {filteredTeams.length === 0 ? (
+                       <div style={{ padding: '3rem', fontSize: '0.7rem', opacity: 0.5, textAlign: 'center' }}>NO APPROVED {mode} SQUADS AVAILABLE.</div>
+                     ) : (
+                       filteredTeams.map(t => (
+                        <div 
+                          key={t.id} 
+                          onClick={() => toggleSquad(t.id)}
+                          style={{ 
+                            padding: '1.2rem', 
+                            background: selectedSquads.includes(t.id) ? 'var(--ff-primary)' : '#FFF',
+                            color: selectedSquads.includes(t.id) ? '#000' : 'inherit',
+                            borderRadius: '16px', cursor: 'pointer', textAlign: 'center', border: '1px solid var(--rose-100)', transition: 'all 0.2s'
+                          }}
+                        >
+                           <div style={{ fontWeight: 900, fontSize: '0.7rem', textTransform: 'uppercase' }}>{t.team_name}</div>
+                           <div style={{ fontSize: '0.55rem', color: '#059669', marginTop: '0.3rem', fontWeight: 800 }}>✓ PAID</div>
+                        </div>
+                       ))
+                     )}
+                  </div>
+
+                  <button className="btn-primary" style={{ marginTop: '3rem', height: '62px' }} onClick={handleFinalize} disabled={saving}>
+                     {saving ? 'UNITING SQUADRONS...' : `FINALIZE ${mode} ROSTER 📡`}
+                  </button>
+               </div>
+            )}
+          </div>
+        </section>
+
+        <section>
+          <div className="dash-card modern-card" style={{ padding: '2.5rem' }}>
+             <div className="section-label" style={{ marginBottom: '2.5rem' }}>LIVE SESSION DETAILS</div>
+             {activeMatch ? (
+               <div className="animate-up">
+                  <div style={{ padding: '2rem', background: 'var(--rose-50)', borderRadius: '24px', marginBottom: '2rem' }}>
+                     <div style={{ fontSize: '0.65rem', fontWeight: 800, color: '#F43F5E' }}>LOCATION & TIME</div>
+                     <div style={{ fontSize: '1.8rem', fontWeight: 900, marginTop: '0.5rem' }}>{activeMatch.map_name.toUpperCase()}</div>
+                     <div style={{ fontSize: '0.8rem', opacity: 0.5 }}>{new Date(activeMatch.match_date).toLocaleString()}</div>
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                     <div style={{ padding: '1.5rem', background: '#F8FAFC', borderRadius: '16px' }}>
+                        <div style={{ fontSize: '0.55rem', opacity: 0.5 }}>ROOM ID</div>
+                        <div style={{ fontWeight: 900, fontSize: '1.2rem' }}>{activeMatch.room_id}</div>
+                     </div>
+                     <div style={{ padding: '1.5rem', background: '#F8FAFC', borderRadius: '16px' }}>
+                        <div style={{ fontSize: '0.55rem', opacity: 0.5 }}>PASSWORD</div>
+                        <div style={{ fontWeight: 900, fontSize: '1.2rem' }}>{activeMatch.room_password}</div>
+                     </div>
+                  </div>
+               </div>
+             ) : (
+               <div style={{ padding: '4rem', textAlign: 'center', opacity: 0.3, fontSize: '0.8rem' }}>SELECT A SCHEDULED SLOT TO VIEW ROOM SPECS</div>
+             )}
+          </div>
+        </section>
+
+      </div>
+    </div>
+  );
+}

@@ -129,7 +129,7 @@ export default function ResultsEntryPage() {
                      </tr>
                   </thead>
                   <tbody>
-                     {results.map((r: any, i: number) => (
+                     {results.map((r, i) => (
                         <tr key={i}>
                            <td style={{ fontWeight: 800 }}>{r.team_name}</td>
                            <td style={{ width: '120px' }}>

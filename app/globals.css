@@ -1,5 +1,5 @@
 :root {
-  /* Pink Rose Palette - High Contrast */
+  /* Pink Rose Palette */
   --rose-50: #FFF1F2;
   --rose-100: #FFE4E6;
   --rose-200: #FECDD3;
@@ -12,25 +12,29 @@
   --rose-900: #881337;
   --rose-950: #4C0519;
 
-  /* Theme semantic colors - Tactical Bold */
-  --ff-bg: #FFFFFF; /* Pure white bg for admin data clarity */
+  /* Theme semantic colors */
+  --ff-bg: var(--rose-50);
   --ff-surface: #FFFFFF;
-  --ff-primary: #F43F5E;
-  --ff-primary-dark: #BE123C;
-  --ff-accent: #FB7185;
-  --ff-text: #0F172A; /* Deep slate for maximum text contrast */
-  --ff-muted: #64748B;
-  --ff-border: rgba(244, 63, 94, 0.12);
-  --ff-success: #059669;
-  --ff-info: #0284C7;
+  --ff-primary: var(--rose-600);
+  --ff-primary-dark: var(--rose-800);
+  --ff-accent: var(--rose-400);
+  --ff-text: var(--rose-950);
+  --ff-muted: #8E6D74;
+  --ff-border: rgba(225, 29, 72, 0.12);
+  --ff-success: #10B981;
+  --ff-info: #0EA5E9;
   
-  --grad-rose: linear-gradient(135deg, #F43F5E, #BE123C);
-  --grad-soft: linear-gradient(135deg, #FFF1F2, #FFE4E6);
+  --grad-rose: linear-gradient(135deg, var(--rose-500), var(--rose-700));
+  --grad-soft: linear-gradient(135deg, var(--rose-50), var(--rose-100));
+  --grad-mesh: radial-gradient(at 0% 0%, var(--rose-100) 0, transparent 50%), 
+               radial-gradient(at 100% 0%, #FFE4E1 0, transparent 50%), 
+               radial-gradient(at 100% 100%, #FFF0F5 0, transparent 50%), 
+               radial-gradient(at 0% 100%, var(--rose-200) 0, transparent 50%);
   
-  /* Fonts - Ultra Tactical */
-  --font-head: 'Outfit', sans-serif;
-  --font-body: 'Plus Jakarta Sans', sans-serif;
-  --font-mono: 'JetBrains Mono', monospace;
+  /* Fonts */
+  --font-head: var(--font-orbitron), 'Orbitron', sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+  --font-body: var(--font-jakarta), 'Plus Jakarta Sans', sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+  --font-mono: var(--font-share-tech-mono), 'Share Tech Mono', monospace, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
 }
 
 .dark-theme {

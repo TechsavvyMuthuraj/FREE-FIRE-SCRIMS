@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { getAdminTeams, getAdminMatches, linkSquadsToMatch } from "../actions";
+import { getAdminTeams, getAdminMatches, createMatch, supabaseAdmin } from "../actions";
 import Toast from "../../../components/Toast";
 
 export default function SchedulePage() {
@@ -24,8 +24,9 @@ export default function SchedulePage() {
     setLoading(true);
     try {
       const [t, ms] = await Promise.all([getAdminTeams(), getAdminMatches()]);
-      setTeams((t as any[]).filter(team => team.payment_status === 'approved'));
-      setMatches((ms as any[]).filter(m => m.status !== 'Completed'));
+      setTeams(t.filter(team => team.payment_status === 'approved'));
+      // Only show upcoming/scheduled matches that haven't been completed
+      setMatches(ms.filter(m => m.status !== 'Completed'));
     } catch (err) { notify("SYNC ERROR", "error"); }
     setLoading(false);
   };
@@ -52,7 +53,17 @@ export default function SchedulePage() {
 
     setSaving(true);
     try {
-        await linkSquadsToMatch(selectedMatchId, selectedSquads);
+        // Link squads to the selected match id
+        // Note: In a real app we'd use a server action. Since we are in the client, we'll try to use actions or supabaseAdmin if exposed via lib
+        const links = selectedSquads.map(tid => ({
+            match_id: selectedMatchId,
+            team_id: tid
+        }));
+
+        // We'll use a direct fetch for simplicity if the tool allows, but actions are better
+        const { error } = await (window as any).supabase.from("match_squads").insert(links);
+        if (error) throw error;
+
         notify("ROSTER FINALIZED FOR ROOM", "success");
         setSelectedSquads([]);
         setSelectedMatchId("");

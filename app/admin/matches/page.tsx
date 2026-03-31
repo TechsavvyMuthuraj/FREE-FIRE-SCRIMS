@@ -252,7 +252,7 @@ export default function MatchesPage() {
           ) : matches.length === 0 ? (
              <div style={{ padding: '3rem', textAlign: 'center', opacity: 0.5 }}>NO ACTIVE MATCHES RECORDED</div>
           ) : (
-            matches.map(m => (
+            matches.map((m: any) => (
               <div key={m.id} className="dash-card modern-card" style={{ padding: '2.5rem' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '2rem' }}>
                   <div>

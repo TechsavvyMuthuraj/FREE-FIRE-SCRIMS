@@ -1,0 +1,42 @@
+# dependencies
+node_modules/
+
+# next.js
+.next/
+out/
+build/
+
+# production
+dist/
+
+# environment variables
+.env
+.env.local
+.env.development
+.env.production
+
+# logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# TypeScript
+*.tsbuildinfo
+
+# Supabase (optional local files)
+.supabase/
+
+# coverage
+coverage/
+
+# misc
+*.log

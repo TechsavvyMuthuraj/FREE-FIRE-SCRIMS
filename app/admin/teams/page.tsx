@@ -6,6 +6,8 @@ import Link from "next/link";
 import { getAdminTeams, deleteTeam, updateTeam, updateTeamPaymentStatus, getApprovedSquadsForMatch } from "../actions";
 import Toast from "../../../components/Toast";
 import ConfirmModal from "../../../components/ConfirmModal";
+import ImagePreviewModal from "../../../components/ImagePreviewModal";
+import { ZoomIn } from "lucide-react";
 
 export default function TeamsPage() {
   const [teams, setTeams] = useState<any[]>([]);
@@ -26,6 +28,7 @@ export default function TeamsPage() {
   const [editForm, setEditForm] = useState<any>({});
   const [saving, setSaving] = useState(false);
   const [teamToDelete, setTeamToDelete] = useState<string | null>(null);
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
 
   const notify = (msg: string, type: 'success' | 'error' | 'warning') => {
     setToast({ msg, type });
@@ -291,36 +294,22 @@ export default function TeamsPage() {
            </div>
         </div>
       )}
-      
 
       {/* TEAM DETAIL MODAL — rendered via portal at body level */}
       {selectedTeam && typeof window !== 'undefined' && createPortal(
         <div 
           onClick={handleCloseModal}
           style={{ 
-            position: 'fixed', 
-            inset: 0, 
-            background: 'rgba(0,0,0,0.88)', 
-            backdropFilter: 'blur(12px)', 
-            display: 'flex', 
-            alignItems: 'center', 
-            justifyContent: 'center', 
-            zIndex: 9000, 
-            padding: '1rem',
-            overflowY: 'auto'
+            position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.88)', backdropFilter: 'blur(12px)', 
+            display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9000, padding: '1rem', overflowY: 'auto'
           }}
         >
           <div 
             className="animate-scale-in"
             onClick={e => e.stopPropagation()} 
             style={{ 
-              background: '#FFFFFF', 
-              width: '100%', 
-              maxWidth: '680px', 
-              borderRadius: '28px', 
-              boxShadow: '0 40px 80px rgba(0,0,0,0.4)', 
-              overflow: 'hidden',
-              margin: 'auto'
+              background: '#FFFFFF', width: '100%', maxWidth: '680px', borderRadius: '28px', 
+              boxShadow: '0 40px 80px rgba(0,0,0,0.4)', overflow: 'hidden', margin: 'auto'
             }}
           >
             {/* HEADER */}
@@ -345,7 +334,6 @@ export default function TeamsPage() {
                 </div>
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-
                   {/* INFO GRID */}
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 160px), 1fr))', gap: '1rem' }}>
                     <div style={{ background: '#FFF5F5', padding: '1rem', borderRadius: '12px' }}>
@@ -364,10 +352,55 @@ export default function TeamsPage() {
 
                   {/* RECEIPT */}
                   <div style={{ borderTop: '1px solid #FFF0F0', paddingTop: '1.5rem' }}>
-                    <div style={{ fontSize: '0.6rem', fontWeight: 900, letterSpacing: '0.15em', color: '#9ca3af', marginBottom: '1rem' }}>PAYMENT RECEIPT</div>
-                    <div style={{ width: '100%', height: '220px', background: '#FFF5F5', borderRadius: '16px', overflow: 'hidden', border: '2px dashed #FECACA', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                      <div style={{ fontSize: '0.6rem', fontWeight: 900, letterSpacing: '0.15em', color: '#9ca3af' }}>PAYMENT RECEIPT</div>
+                      <span 
+                        onClick={(e) => { e.stopPropagation(); if(selectedTeam.payment_screenshot_url) setPreviewImage(selectedTeam.payment_screenshot_url); }}
+                        style={{ fontSize: '0.55rem', fontWeight: 800, color: 'var(--ff-primary)', cursor: 'pointer', textDecoration: 'underline', padding: '0.5rem' }}
+                      >🔍 CLICK TO ENLARGE</span>
+                    </div>
+                    
+                    {/* ENHANCED THUMBNAIL TRIGGER */}
+                    <div 
+                      className="group relative overflow-hidden"
+                      onClick={(e) => { 
+                        e.stopPropagation(); 
+                        if (selectedTeam.payment_screenshot_url) setPreviewImage(selectedTeam.payment_screenshot_url); 
+                      }}
+                      style={{ 
+                        width: '100%', height: '220px', background: '#FFF5F5', borderRadius: '16px', overflow: 'hidden', 
+                        border: '2px dashed #FECACA', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        cursor: 'pointer', transition: 'all 0.4s cubic-bezier(0.23, 1, 0.32, 1)', position: 'relative',
+                        boxShadow: 'inset 0 4px 12px rgba(0,0,0,0.03)'
+                      }}
+                    >
                       {selectedTeam.payment_screenshot_url ? (
-                        <img src={selectedTeam.payment_screenshot_url} alt="Receipt" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                        <>
+                          <img 
+                            src={selectedTeam.payment_screenshot_url} 
+                            alt="Receipt" 
+                            style={{ width: '100%', height: '100%', objectFit: 'contain', transition: 'transform 0.4s cubic-bezier(0.23, 1, 0.32, 1)' }} 
+                            className="thumbnail-img"
+                          />
+                          {/* PREMIUM HOVER OVERLAY */}
+                          <div 
+                            className="overlay-mask"
+                            style={{ 
+                              position: 'absolute', inset: 0, background: 'rgba(255, 140, 0, 0.08)', transition: 'all 0.3s', 
+                              display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: 0,
+                              backdropFilter: 'blur(2px)'
+                            }}
+                          >
+                             <div style={{ 
+                               background: 'var(--ff-primary)', color: '#000', padding: '0.75rem 1.5rem', 
+                               borderRadius: '30px', fontWeight: 900, display: 'flex', alignItems: 'center', gap: '0.5rem',
+                               boxShadow: '0 10px 25px rgba(255,140,0,0.4)', transform: 'translateY(10px)', transition: 'all 0.3s'
+                             }} className="overlay-btn">
+                               <ZoomIn size={18} strokeWidth={3} />
+                               <span style={{ fontSize: '0.65rem', letterSpacing: '0.05em' }}>PREVIEW</span>
+                             </div>
+                          </div>
+                        </>
                       ) : (
                         <div style={{ textAlign: 'center', opacity: 0.3 }}>
                           <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>📄</div>
@@ -376,6 +409,13 @@ export default function TeamsPage() {
                       )}
                     </div>
                   </div>
+
+                  <style jsx>{`
+                    div:hover > .overlay-mask { opacity: 1 !important; }
+                    div:hover > .overlay-mask .overlay-btn { transform: translateY(0) !important; }
+                    div:hover > .thumbnail-img { transform: scale(1.05) !important; }
+                    div:hover { border-color: var(--ff-primary) !important; background: #FFF !important; }
+                  `}</style>
 
                   {/* PAYMENT STATUS + ACTIONS */}
                   <div style={{ borderTop: '1px solid #FFF0F0', paddingTop: '1.5rem' }}>
@@ -412,7 +452,6 @@ export default function TeamsPage() {
                       ))}
                     </div>
                   </div>
-
                 </div>
               )}
             </div>
@@ -443,6 +482,14 @@ export default function TeamsPage() {
         onCancel={() => setTeamToDelete(null)}
         confirmText="TERMINATE"
         type="danger"
+      />
+
+      {/* REUSABLE IMAGE PREVIEW COMPONENT */}
+      <ImagePreviewModal 
+        isOpen={!!previewImage}
+        src={previewImage}
+        onClose={() => setPreviewImage(null)}
+        alt="Payment Receipt Preview"
       />
     </div>
   );

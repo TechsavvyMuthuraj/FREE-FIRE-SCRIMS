@@ -97,12 +97,10 @@ export default async function Home() {
               <div className="mode-name-luxe">{t.mode_name}</div>
               <p className="mode-desc-luxe">{t.description}</p>
               <div className="mode-meta-luxe">
-                <div><span>POOL</span><strong>{t.teams}</strong></div>
+                <div><span>TEAM SIZE</span><strong>{t.teams}</strong></div>
                 <div><span>PRIZE</span><strong>{t.prize}</strong></div>
-                <div className="match-time-tag">
-                  <span>STATUS</span>
-                  <strong>LIVE ENROLL</strong>
-                </div>
+                <div><span>MATCH TIME</span><strong>{t.match_time || 'TBA'}</strong></div>
+                <div><span>STATUS</span><strong>LIVE ENROLL</strong></div>
               </div>
             </div>
           ))}
@@ -127,16 +125,49 @@ export default async function Home() {
       </div>
 
       <div className="section" id="rules">
-        <div className="section-label animate-up">📜 THE CODE</div>
+        <div className="section-label animate-up">📜 TOURNAMENT CODE</div>
         <h2 className="section-title animate-up">PLAYING FAIR</h2>
 
-        <div className="rules-list-luxe">
-          {rules.map((r: any, index: number) => (
-            <div className="rule-item-luxe animate-up" key={r.id} style={{ animationDelay: `${0.05 + index * 0.05}s` }}>
-              <span className="rule-num-luxe">{r.rule_number}</span>
-              <p>🛡️ {r.description}</p>
+        <div className="rules-container-split">
+          {/* CLASH SQUAD CATEGORY */}
+          <div className="rules-column animate-up" style={{ animationDelay: '0.1s' }}>
+            <div className="rules-category-header">
+               <span className="mode-badge-mini cs">CS</span>
+               <h3>⚔️ CLASH SQUAD DIRECTIVES</h3>
             </div>
-          ))}
+            <div className="rules-list-simple">
+              {rules.filter((r: any) => r.mode === 'CS' || r.mode === 'ALL' || !r.mode).slice(0, 3).length > 0 ? (
+                rules.filter((r: any) => r.mode === 'CS' || r.mode === 'ALL' || !r.mode).slice(0, 3).map((r: any, idx: number) => (
+                  <div className="rule-card-mini" key={r.id}>
+                    <span className="rule-rank">{r.rule_number || `0${idx+1}`}</span>
+                    <p>{r.description}</p>
+                  </div>
+                ))
+              ) : (
+                <div className="rules-empty">NO SPECIFIC CS RULES CONFIGURED</div>
+              )}
+            </div>
+          </div>
+
+          {/* BATTLE ROYALE CATEGORY */}
+          <div className="rules-column animate-up" style={{ animationDelay: '0.2s' }}>
+            <div className="rules-category-header">
+               <span className="mode-badge-mini br">BR</span>
+               <h3>🪂 BATTLE ROYALE DIRECTIVES</h3>
+            </div>
+            <div className="rules-list-simple">
+              {rules.filter((r: any) => r.mode === 'BR' || r.mode === 'ALL' || !r.mode).slice(0, 3).length > 0 ? (
+                rules.filter((r: any) => r.mode === 'BR' || r.mode === 'ALL' || !r.mode).slice(0, 3).map((r: any, idx: number) => (
+                  <div className="rule-card-mini" key={r.id}>
+                    <span className="rule-rank">{r.rule_number || `0${idx+1}`}</span>
+                    <p>{r.description}</p>
+                  </div>
+                ))
+              ) : (
+                <div className="rules-empty">NO SPECIFIC BR RULES CONFIGURED</div>
+              )}
+            </div>
+          </div>
         </div>
       </div>
 

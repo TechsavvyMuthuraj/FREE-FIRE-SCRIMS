@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Orbitron, Plus_Jakarta_Sans, Share_Tech_Mono } from "next/font/google";
 import Navbar from "@/components/Navbar";
 import "./globals.css";
+import StyledJsxRegistry from "@/lib/registry";
 
 const orbitron = Orbitron({ 
   subsets: ["latin"],
@@ -34,8 +35,11 @@ export default function RootLayout({
       <head>
         <meta charSet="utf-8" />
       </head>
-      <body>
-        {children}
+      <body className={`${orbitron.variable} ${plusJakarta.variable} ${shareTechMono.variable}`}>
+        <StyledJsxRegistry>
+          <Navbar />
+          {children}
+        </StyledJsxRegistry>
       </body>
     </html>
   );

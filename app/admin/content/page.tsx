@@ -73,6 +73,7 @@ export default function ContentEditorPage() {
     setSaving(true);
     try {
       await updateLandingTournament(editingId as string, {
+        ...editData, // Pass all fields to ensure mode_id and others are kept
         mode_tag: editData.mode_tag,
         mode_name: editData.mode_name,
         description: editData.description,
@@ -113,13 +114,15 @@ export default function ContentEditorPage() {
       if (editingId === "new") {
         await createLandingRule({
           rule_number: editData.rule_number,
-          description: editData.description
+          description: editData.description,
+          mode: editData.mode || "ALL"
         });
         notify("NEW RULE PUBLISHED", "success");
       } else {
         await updateLandingRule(editingId as string, {
           rule_number: editData.rule_number,
-          description: editData.description
+          description: editData.description,
+          mode: editData.mode || "ALL"
         });
         notify("RULE UPDATED", "success");
       }
@@ -152,7 +155,7 @@ export default function ContentEditorPage() {
 
   const handleAddNewRule = () => {
     setEditingId("new");
-    setEditData({ rule_number: `RULE_0${rules.length + 1}`, description: "" });
+    setEditData({ rule_number: `RULE_0${rules.length + 1}`, description: "", mode: "ALL" });
   };
 
   return (
@@ -315,9 +318,19 @@ export default function ContentEditorPage() {
                 {editingId === 'new' && (
                   <div style={{ border: '2px dashed var(--ff-primary)', borderRadius: '8px', padding: '1.25rem', background: 'rgba(255,140,0,0.03)' }}>
                     <div className="form-row" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', width: '100%' }}>
-                      <div className="form-group" style={{ maxWidth: 'min(100%, 240px)' }}>
-                        <label className="form-label">Rule Keyword</label>
-                        <input className="form-input" value={editData.rule_number} onChange={e => setEditData({...editData, rule_number: e.target.value})} placeholder="e.g. RULE_01" />
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                        <div className="form-group">
+                          <label className="form-label">Rule Keyword</label>
+                          <input className="form-input" value={editData.rule_number} onChange={e => setEditData({...editData, rule_number: e.target.value})} placeholder="e.g. RULE_01" />
+                        </div>
+                        <div className="form-group">
+                          <label className="form-label">Rule Mode</label>
+                          <select className="form-input" value={editData.mode} onChange={e => setEditData({...editData, mode: e.target.value})}>
+                            <option value="ALL">ALL MODES</option>
+                            <option value="CS">CLASH SQUAD ONLY</option>
+                            <option value="BR">BATTLE ROYALE ONLY</option>
+                          </select>
+                        </div>
                       </div>
                       <div className="form-group">
                         <label className="form-label">Rule Description</label>
@@ -335,9 +348,19 @@ export default function ContentEditorPage() {
                   <div key={r.id} style={{ border: '1px solid var(--ff-border)', borderRadius: '8px', padding: '1.25rem', background: editingId === r.id ? 'rgba(255,140,0,0.03)' : 'transparent' }}>
                     {editingId === r.id ? (
                       <div className="form-row" style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', width: '100%' }}>
-                        <div className="form-group" style={{ maxWidth: 'min(100%, 200px)' }}>
-                          <label className="form-label">Rule Keyword</label>
-                          <input className="form-input" value={editData.rule_number} onChange={e => setEditData({...editData, rule_number: e.target.value})} />
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                          <div className="form-group">
+                            <label className="form-label">Rule Keyword</label>
+                            <input className="form-input" value={editData.rule_number} onChange={e => setEditData({...editData, rule_number: e.target.value})} />
+                          </div>
+                          <div className="form-group">
+                            <label className="form-label">Rule Mode</label>
+                            <select className="form-input" value={editData.mode} onChange={e => setEditData({...editData, mode: e.target.value})}>
+                              <option value="ALL">ALL MODES</option>
+                              <option value="CS">CLASH SQUAD ONLY</option>
+                              <option value="BR">BATTLE ROYALE ONLY</option>
+                            </select>
+                          </div>
                         </div>
                         <div className="form-group">
                           <label className="form-label">Description</label>
@@ -350,10 +373,23 @@ export default function ContentEditorPage() {
                       </div>
                     ) : (
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                         <div style={{ flex: 1 }}>
-                           <span style={{ color: 'var(--ff-primary)', fontFamily: 'var(--font-mono)', fontSize: '0.8rem' }}>{r.rule_number}</span>
-                           <p style={{ color: 'var(--ff-text)', fontSize: '0.9rem', marginTop: '0.5rem' }}>{r.description}</p>
-                         </div>
+                          <div style={{ flex: 1 }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.4rem' }}>
+                              <span style={{ color: 'var(--ff-primary)', fontFamily: 'var(--font-mono)', fontSize: '0.8rem', fontWeight: 900 }}>{r.rule_number}</span>
+                              <span style={{ 
+                                fontSize: '0.55rem', 
+                                padding: '0.15rem 0.6rem', 
+                                borderRadius: '4px', 
+                                background: r.mode === 'CS' ? 'rgba(255,140,0,0.05)' : r.mode === 'BR' ? 'rgba(239,68,68,0.05)' : 'rgba(100,100,100,0.05)',
+                                color: r.mode === 'CS' ? 'var(--ff-primary)' : r.mode === 'BR' ? '#EF4444' : 'var(--ff-muted)',
+                                border: '1px solid currentColor',
+                                fontWeight: 900
+                              }}>
+                                {r.mode || 'ALL'}
+                              </span>
+                            </div>
+                            <p style={{ color: 'var(--ff-text)', fontSize: '0.9rem' }}>{r.description}</p>
+                          </div>
                          <div style={{ display: 'flex', gap: '0.5rem', marginLeft: '1rem' }}>
                            <button className="small-btn" onClick={() => handleEdit(r)}>EDIT</button>
                            <button className="small-btn btn-delete" onClick={() => handleDeleteRule(r.id)}>DEL</button>

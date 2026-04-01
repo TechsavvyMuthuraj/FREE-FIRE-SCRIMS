@@ -329,9 +329,9 @@
 
 .mode-meta-luxe {
   display: grid;
-  grid-template-columns: auto auto 1fr;
-  gap: 3rem;
-  padding-top: 3rem;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.5rem;
+  padding-top: 2.5rem;
   border-top: 1px solid rgba(255, 255, 255, 0.05);
 }
 
@@ -352,7 +352,8 @@
 .mode-meta-luxe strong {
   font-family: var(--font-mono);
   color: var(--ff-primary);
-  font-size: 1.25rem;
+  font-size: 1.05rem;
+  white-space: nowrap;
 }
 
 /* ─── PRIZES GRID ─── */
@@ -411,50 +412,101 @@
   letter-spacing: 0.1em;
 }
 
-/* ─── RULES LIST ─── */
-.rules-list-luxe {
+/* ─── RULES LIST CATEGORIZED ─── */
+.rules-container-split {
   display: grid;
   grid-template-columns: 1fr 1fr;
+  gap: 2.5rem;
+  margin-top: 2rem;
+}
+
+.rules-column {
+  display: flex;
+  flex-direction: column;
   gap: 1.5rem;
 }
 
-.rule-item-luxe {
-  display: flex;
-  flex-direction: column;
-  gap: 1.25rem;
-  padding: 2.5rem;
-  background: #111111;
-  border-radius: 12px;
-  border: 1px solid rgba(255, 140, 0, 0.1);
-  transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
-  position: relative;
-  overflow: hidden;
-}
-
-.rule-item-luxe:hover {
-  transform: translateY(-10px);
-  border-color: var(--ff-primary);
-  box-shadow: 0 15px 40px rgba(255, 140, 0, 0.1);
-}
-
-.rule-num-luxe {
-  font-family: var(--font-mono);
-  font-size: 0.75rem;
-  letter-spacing: 0.2em;
-  color: var(--ff-primary);
-  font-weight: 700;
-  text-transform: uppercase;
-}
-
-.rule-item-luxe p {
-  color: #FFC04D;
+.rules-category-header {
   display: flex;
   align-items: center;
   gap: 1rem;
-  line-height: 1.8;
-  font-size: 1.15rem;
+  margin-bottom: 0.5rem;
+}
+
+.rules-category-header h3 {
+  font-family: var(--font-head);
+  font-size: 1.25rem;
+  letter-spacing: 0.05em;
+  color: #FFFFFF;
+}
+
+.mode-badge-mini {
+  font-family: var(--font-mono);
+  font-size: 0.55rem;
+  font-weight: 900;
+  padding: 0.25rem 0.6rem;
+  border-radius: 4px;
+  background: rgba(255,140,0,0.1);
+  color: var(--ff-primary);
+  border: 1px solid currentColor;
+}
+
+.mode-badge-mini.br {
+  background: rgba(239, 68, 68, 0.1);
+  color: #EF4444;
+}
+
+.rules-list-simple {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.rule-card-mini {
+  background: #0D0D0D;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  padding: 1.5rem;
+  border-radius: 12px;
+  transition: all 0.3s cubic-bezier(0.23, 1, 0.32, 1);
+  position: relative;
+  overflow: hidden;
+  border-left: 3px solid var(--ff-primary);
+}
+
+.rules-column:last-child .rule-card-mini {
+  border-left-color: #EF4444;
+}
+
+.rule-card-mini:hover {
+  transform: translateX(10px);
+  background: #111111;
+  border-color: rgba(255, 140, 0, 0.2);
+}
+
+.rule-rank {
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  color: var(--ff-muted);
+  text-transform: uppercase;
+  margin-bottom: 0.5rem;
+  display: block;
+}
+
+.rule-card-mini p {
+  color: #E2E8F0;
+  font-size: 0.95rem;
+  line-height: 1.6;
   margin: 0;
-  font-weight: 500;
+}
+
+.rules-empty {
+  padding: 2rem;
+  text-align: center;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: var(--ff-muted);
+  border: 1px dashed rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
 }
 
 /* ─── CTA PANEL ─── */
@@ -515,8 +567,9 @@
     grid-template-columns: 1fr;
   }
   .mode-meta-luxe {
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr 1fr;
     gap: 1.5rem;
+    text-align: left;
   }
 }
 

@@ -505,6 +505,7 @@
   }
   .btn-demon-solid, .btn-demon-outline {
     width: 100%;
+    text-align: center;
   }
   .stats-strip-luxe {
     grid-template-columns: 1fr 1fr;
@@ -520,15 +521,95 @@
 }
 
 @media (max-width: 600px) {
-  .section { padding: 60px 20px; }
-  .hero-title-main { font-size: clamp(2.5rem, 15vw, 4rem); line-height: 1.1; }
-  .section-title { font-size: 2.5rem; }
-  .stats-strip-luxe { grid-template-columns: 1fr; }
-  .stat-num-luxe { font-size: 2.5rem; }
+  .section { padding: 50px 18px; }
+
+  /* Hero section compact */
+  .hero-centered { padding: 90px 18px 70px; }
+  .hero-content-wrap { gap: 0; }
+
+  /* Logo smaller on mobile */
+  .hero-logo-container {
+    width: 120px;
+    height: 120px;
+    margin-bottom: 2rem;
+  }
+
+  /* Hero title: smaller, wrappable */
+  .hero-title-main {
+    font-size: clamp(2rem, 12vw, 3rem);
+    line-height: 1.1;
+    word-break: break-word;
+    overflow-wrap: break-word;
+    hyphens: auto;
+    margin-bottom: 1.5rem;
+  }
+
+  /* Season badge compact */
+  .season-badge {
+    font-size: 0.6rem;
+    letter-spacing: 0.1em;
+    padding: 0.6rem 1rem;
+    margin-bottom: 2rem;
+    word-break: break-word;
+  }
+
+  /* Hero description */
+  .hero-desc-main {
+    font-size: 0.95rem;
+    margin-bottom: 2.5rem;
+    line-height: 1.6;
+  }
+
+  /* Section title */
+  .section-title {
+    font-size: clamp(1.8rem, 8vw, 2.5rem);
+    word-break: break-word;
+  }
+  .section-desc { font-size: 0.95rem; }
+
+  /* Stats strip single column */
+  .stats-strip-luxe {
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+  }
+  .stat-num-luxe { font-size: 2rem; }
+  .stat-label-luxe { font-size: 0.55rem; }
+
+  /* Rules section */
   .rule-item-luxe { padding: 1.5rem; }
-  .rule-item-luxe p { font-size: 1rem; }
+  .rule-item-luxe p { font-size: 0.95rem; }
+
+  /* Prize section */
   .prize-amount-luxe { font-size: 2.25rem; }
-  .mode-card-luxe { padding: 2.5rem 1.5rem; }
-  .mode-name-luxe { font-size: 2rem; }
-  .cta-rose-panel { padding: 60px 25px; margin: 40px 20px 80px; }
+
+  /* Mode cards */
+  .mode-card-luxe { padding: 2rem 1.25rem; }
+  .mode-name-luxe { font-size: 1.8rem; }
+
+  /* CTA panel */
+  .cta-rose-panel { padding: 50px 20px; margin: 40px 15px 60px; }
+
+  /* Buttons full width */
+  .btn-demon-solid, .btn-demon-outline {
+    width: 100%;
+    padding: 1.1rem 1.5rem;
+    font-size: 0.8rem;
+    display: block;
+    text-align: center;
+  }
 }
+
+@media (max-width: 380px) {
+  .hero-title-main {
+    font-size: clamp(1.6rem, 10vw, 2.5rem);
+  }
+  .hero-logo-container {
+    width: 100px;
+    height: 100px;
+    margin-bottom: 1.5rem;
+  }
+  .section-title {
+    font-size: clamp(1.5rem, 7vw, 2rem);
+  }
+}
+

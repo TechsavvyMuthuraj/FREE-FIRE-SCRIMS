@@ -108,10 +108,10 @@ export default function DashboardOverview() {
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '2.5rem' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 340px), 1fr))', gap: '2rem' }}>
         <section>
           <div className="dash-card modern-card" style={{ padding: '2.5rem', background: '#FFFFFF' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '2.5rem', alignItems: 'center' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '2rem', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem' }}>
               <div className="section-label" style={{ marginBottom: 0 }}>ENROLLMENT ANALYTICS</div>
               <div style={{ fontSize: '0.6rem', padding: '0.3rem 0.8rem', background: 'var(--rose-50)', borderRadius: '20px', color: 'var(--rose-400)', fontWeight: 800 }}>LIVE SYNC ENABLED</div>
             </div>

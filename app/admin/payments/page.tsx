@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { getLandingPayments, createLandingPayment, updateLandingPayment, deleteLandingPayment } from "../actions";
 import Toast from "../../../components/Toast";
+import ConfirmModal from "../../../components/ConfirmModal";
 
 export default function PaymentSettings() {
   const router = useRouter();
@@ -12,6 +13,7 @@ export default function PaymentSettings() {
   const [editingPayment, setEditingPayment] = useState<any>(null);
   const [showAddModal, setShowAddModal] = useState(false);
   const [toast, setToast] = useState<{msg: string, type: 'success' | 'error' | 'warning' | null}>({ msg: "", type: null });
+  const [payToDelete, setPayToDelete] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     label: "",
     upi_id: "",
@@ -55,13 +57,19 @@ export default function PaymentSettings() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm("PERMANENTLY DELETE THIS PAYMENT CHANNEL?")) return;
+    setPayToDelete(id);
+  };
+
+  const confirmDeletePay = async () => {
+    if (!payToDelete) return;
     try {
-      await deleteLandingPayment(id);
+      await deleteLandingPayment(payToDelete);
       notify("CHANNEL DELETED PERMANENTLY", "success");
       fetchPayments();
     } catch (err) { 
       notify("DELETION REJECTED BY SYSTEM", "error"); 
+    } finally {
+      setPayToDelete(null);
     }
   };
 
@@ -244,6 +252,15 @@ export default function PaymentSettings() {
         }
         .dash-card:hover { transform: translateY(-5px); box-shadow: 0 20px 50px rgba(0,0,0,0.06); }
       `}</style>
+      <ConfirmModal 
+        isOpen={!!payToDelete}
+        title="DELETE PAYMENT CHANNEL?"
+        message="This will permanently remove this UPI payment method from the public registration form. Players will no longer be able to use this channel."
+        onConfirm={confirmDeletePay}
+        onCancel={() => setPayToDelete(null)}
+        confirmText="DELETE CHANNEL"
+        type="danger"
+      />
     </>
   );
 }

@@ -1,9 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import Link from "next/link";
 import { getAdminTeams, deleteTeam, updateTeam, updateTeamPaymentStatus, getApprovedSquadsForMatch } from "../actions";
 import Toast from "../../../components/Toast";
+import ConfirmModal from "../../../components/ConfirmModal";
 
 export default function TeamsPage() {
   const [teams, setTeams] = useState<any[]>([]);
@@ -16,12 +18,14 @@ export default function TeamsPage() {
   // Deployment State
   const [deployMode, setDeployMode] = useState<"CS" | "BR">("CS");
   const [pendingSquads, setPendingSquads] = useState<any[]>([]);
+  const [selectedDeployIds, setSelectedDeployIds] = useState<string[]>([]);
 
   // Modal States
   const [selectedTeam, setSelectedTeam] = useState<any>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [editForm, setEditForm] = useState<any>({});
   const [saving, setSaving] = useState(false);
+  const [teamToDelete, setTeamToDelete] = useState<string | null>(null);
 
   const notify = (msg: string, type: 'success' | 'error' | 'warning') => {
     setToast({ msg, type });
@@ -48,15 +52,44 @@ export default function TeamsPage() {
     }
   }, [activeTab, deployMode]);
 
+  useEffect(() => {
+    setSelectedDeployIds([]);
+  }, [deployMode]);
+
+  const toggleSquad = (id: string) => {
+    const capacity = deployMode === 'CS' ? 2 : 12;
+    if (selectedDeployIds.includes(id)) {
+      setSelectedDeployIds(selectedDeployIds.filter(sid => sid !== id));
+    } else {
+      if (selectedDeployIds.length < capacity) {
+        setSelectedDeployIds([...selectedDeployIds, id]);
+      } else {
+        notify(`ONLY ${capacity} SQUADS ALLOWED FOR ${deployMode}`, "warning");
+      }
+    }
+  };
+
+  const autoSelect = () => {
+    const capacity = deployMode === 'CS' ? 2 : 12;
+    setSelectedDeployIds(pendingSquads.slice(0, capacity).map(s => s.id));
+    notify(`TOP ${capacity} SQUADS SELECTED`, "success");
+  };
+
   const handleDeleteTeam = async (id: string) => {
-    if (!confirm("Permanently remove this squad?")) return;
+    setTeamToDelete(id);
+  };
+
+  const confirmDeleteTeam = async () => {
+    if (!teamToDelete) return;
     try {
-      await deleteTeam(id);
-      setTeams(teams.filter((team) => team.id !== id));
-      if (selectedTeam?.id === id) handleCloseModal();
+      await deleteTeam(teamToDelete);
+      setTeams(teams.filter((team) => team.id !== teamToDelete));
+      if (selectedTeam?.id === teamToDelete) handleCloseModal();
       notify("SQUAD TERMINATED", "success");
     } catch (err) {
       notify("TERMINATION REJECTED", "error");
+    } finally {
+      setTeamToDelete(null);
     }
   };
 
@@ -100,7 +133,7 @@ export default function TeamsPage() {
       </div>
 
       {/* SUB-TABS */}
-      <div style={{ display: 'flex', gap: '2rem', borderBottom: '1px solid var(--rose-100)', marginBottom: '2rem' }}>
+      <div style={{ display: 'flex', gap: '1.5rem', borderBottom: '1px solid var(--rose-100)', marginBottom: '1.5rem', overflowX: 'auto', WebkitOverflowScrolling: 'touch', flexShrink: 0 }}>
          <button onClick={() => setActiveTab("directory")} style={{ padding: '1rem 0', background: 'none', border: 'none', borderBottom: activeTab === 'directory' ? '3px solid var(--ff-primary)' : '3px solid transparent', color: activeTab === 'directory' ? 'var(--ff-primary)' : 'var(--rose-400)', fontWeight: 800, fontSize: '0.75rem', cursor: 'pointer', transition: 'all 0.3s' }}>SQUAD DIRECTORY</button>
          <button onClick={() => setActiveTab("deployment")} style={{ padding: '1rem 0', background: 'none', border: 'none', borderBottom: activeTab === 'deployment' ? '3px solid var(--ff-primary)' : '3px solid transparent', color: activeTab === 'deployment' ? 'var(--ff-primary)' : 'var(--rose-400)', fontWeight: 800, fontSize: '0.75rem', cursor: 'pointer', transition: 'all 0.3s' }}>DEPLOYMENT PREVIEW</button>
       </div>
@@ -181,52 +214,125 @@ export default function TeamsPage() {
         </div>
       ) : (
         <div className="animate-up">
-           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2.5rem' }}>
-              <div>
-                <h3 style={{ fontFamily: 'var(--font-head)', fontSize: '1.5rem', margin: 0 }}>MATCH DEPLOYMENT QUEUE</h3>
-                <p style={{ color: 'var(--ff-muted)', fontSize: '0.8rem' }}>Next 12 squads ready for official room assignment.</p>
-              </div>
-              <select className="filter-select" value={deployMode} onChange={e => setDeployMode(e.target.value as any)} style={{ height: '48px', minWidth: '200px' }}>
-                <option value="CS">CS COMPETITORS</option>
-                <option value="BR">BR COMPETITORS</option>
-              </select>
-           </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
+               <div style={{ minWidth: '240px' }}>
+                 <h3 style={{ fontFamily: 'var(--font-head)', fontSize: 'clamp(1.2rem, 3vw, 1.5rem)', margin: 0 }}>MATCH DEPLOYMENT QUEUE</h3>
+                 <p style={{ color: 'var(--ff-muted)', fontSize: '0.75rem', marginTop: '0.25rem' }}>Select exactly {deployMode === 'CS' ? '2' : '12'} squads to deploy to a new room.</p>
+               </div>
+               <div style={{ display: 'flex', gap: '0.8rem', alignItems: 'center' }}>
+                  {selectedDeployIds.length === 0 && pendingSquads.length > 0 && (
+                    <button onClick={autoSelect} className="action-btn" style={{ background: 'var(--ff-primary)', color: '#000', border: 'none', padding: '0.5rem 1rem', fontSize: '0.6rem', fontWeight: 900 }}>
+                      ⚡ SELECT TOP {deployMode === 'CS' ? '2' : '12'}
+                    </button>
+                  )}
+                  <span style={{ fontSize: '0.75rem', fontWeight: 900, color: selectedDeployIds.length === (deployMode === 'CS' ? 2 : 12) ? '#059669' : 'var(--ff-primary)' }}>
+                    SELECTED: {selectedDeployIds.length} / {deployMode === 'CS' ? 2 : 12}
+                  </span>
+                  <select className="filter-select" value={deployMode} onChange={e => setDeployMode(e.target.value as any)} style={{ height: '48px', minWidth: '180px', width: 'auto' }}>
+                    <option value="CS">CS COMPETITORS</option>
+                    <option value="BR">BR COMPETITORS</option>
+                  </select>
+               </div>
+            </div>
 
-           <div className="dash-grid" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))' }}>
-              {pendingSquads.length === 0 ? (
+            <div className="dash-grid" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))' }}>
+               {pendingSquads.length === 0 ? (
                 <div style={{ gridColumn: '1/-1', padding: '5rem', textAlign: 'center', color: 'var(--ff-muted)' }}>NO SQUADS VERIFIED FOR DEPLOYMENT</div>
               ) : (
-                pendingSquads.map((s, i) => (
-                  <div key={s.id} className="dash-card modern-card" style={{ padding: '1.5rem', borderLeft: '3px solid var(--ff-primary)' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem' }}>
-                      <span style={{ fontSize: '0.6rem', fontWeight: 900, background: 'var(--rose-50)', padding: '0.2rem 0.5rem', borderRadius: '4px' }}>RANK: {i+1}</span>
-                      <span style={{ fontSize: '0.55rem', opacity: 0.5 }}>{new Date(s.created_at).toLocaleDateString()}</span>
+                pendingSquads.map((s, i) => {
+                  const isSelected = selectedDeployIds.includes(s.id);
+                  return (
+                    <div 
+                      key={s.id} 
+                      onClick={() => toggleSquad(s.id)}
+                      className="dash-card modern-card" 
+                      style={{ 
+                        padding: '1.5rem', 
+                        borderLeft: isSelected ? '5px solid var(--ff-primary)' : '3px solid #e5e7eb',
+                        background: isSelected ? 'rgba(255,140,0,0.05)' : '#FFF',
+                        cursor: 'pointer',
+                        transform: isSelected ? 'scale(1.02)' : 'none',
+                        boxShadow: isSelected ? '0 10px 25px rgba(255,140,0,0.1)' : 'none',
+                        transition: 'all 0.2s'
+                      }}
+                    >
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem' }}>
+                        <span style={{ fontSize: '0.6rem', fontWeight: 900, background: isSelected ? 'var(--ff-primary)' : 'var(--rose-50)', color: isSelected ? '#000' : 'inherit', padding: '0.2rem 0.5rem', borderRadius: '4px' }}>
+                            {isSelected ? '✓ SELECTED' : `RANKING: ${i+1}`}
+                        </span>
+                        <span style={{ fontSize: '0.55rem', opacity: 0.5 }}>{new Date(s.created_at).toLocaleDateString()}</span>
+                      </div>
+                      <div style={{ fontWeight: 800, fontSize: '1rem', color: isSelected ? 'var(--ff-primary)' : 'var(--rose-950)', marginBottom: '0.5rem' }}>{s.team_name}</div>
+                      <div style={{ fontSize: '0.75rem', color: 'var(--ff-muted)' }}>Leader: {s.leader_name}</div>
                     </div>
-                    <div style={{ fontWeight: 800, fontSize: '1rem', color: 'var(--rose-950)', marginBottom: '0.5rem' }}>{s.team_name}</div>
-                    <div style={{ fontSize: '0.75rem', color: 'var(--ff-muted)' }}>Leader: {s.leader_name}</div>
-                  </div>
-                ))
+                  );
+                })
               )}
            </div>
 
-           {pendingSquads.length >= 12 && (
-             <div style={{ marginTop: '3rem', textAlign: 'center' }}>
-                <Link href="/admin/matches" className="btn-primary" style={{ padding: '1rem 3rem' }}>DEPLOY THESE SQUADS TO NEW ROOM →</Link>
-             </div>
-           )}
+           <div style={{ marginTop: '3rem', textAlign: 'center' }}>
+                <p style={{ fontSize: '0.65rem', fontWeight: 800, color: 'var(--ff-muted)', marginBottom: '1rem', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+                     {selectedDeployIds.length === (deployMode === 'CS' ? 2 : 12) 
+                        ? '🔥 READY FOR DEPLOYMENT → CLICK BELOW' 
+                        : `PLEASE SELECT EXACTLY ${deployMode === 'CS' ? '2' : '12'} SQUADS TO PROCEED`}
+                </p>
+                <Link 
+                  href={`/admin/matches?activeTab=create&mode=${deployMode}&squads=${selectedDeployIds.join(',')}`} 
+                  className="btn-primary" 
+                  style={{ 
+                    padding: '1.25rem 4rem',
+                    opacity: selectedDeployIds.length === (deployMode === 'CS' ? 2 : 12) ? 1 : 0.3,
+                    pointerEvents: selectedDeployIds.length === (deployMode === 'CS' ? 2 : 12) ? 'auto' : 'none',
+                    display: 'inline-block'
+                   }}
+                >
+                  DEPLOY {selectedDeployIds.length} SQUADS TO NEW ROOM →
+                </Link>
+           </div>
         </div>
       )}
       
-      {/* TEAM MODAL REMAINING THE SAME */}
-      {selectedTeam && (
-        <div className="modal-overlay active" onClick={handleCloseModal} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(10px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 4000 }}>
-          <div className="animate-scale-in modal-card" onClick={e => e.stopPropagation()} style={{ background: '#FFFFFF', width: '100%', maxWidth: '650px', borderRadius: '24px', boxShadow: '0 50px 100px rgba(0,0,0,0.3)', overflow: 'hidden' }}>
-            <div style={{ padding: '2.5rem', borderBottom: '1px solid var(--rose-50)' }}>
-              <div style={{ fontSize: '0.65rem', color: 'var(--ff-primary)', fontWeight: 900, letterSpacing: '0.2em', marginBottom: '0.5rem' }}>SQUAD DOSSIER</div>
-              <h2 style={{ fontFamily: 'var(--font-head)', fontSize: '2rem', margin: 0 }}>{isEditing ? 'EDITING RECORD' : selectedTeam.team_name}</h2>
+
+      {/* TEAM DETAIL MODAL — rendered via portal at body level */}
+      {selectedTeam && typeof window !== 'undefined' && createPortal(
+        <div 
+          onClick={handleCloseModal}
+          style={{ 
+            position: 'fixed', 
+            inset: 0, 
+            background: 'rgba(0,0,0,0.88)', 
+            backdropFilter: 'blur(12px)', 
+            display: 'flex', 
+            alignItems: 'center', 
+            justifyContent: 'center', 
+            zIndex: 9000, 
+            padding: '1rem',
+            overflowY: 'auto'
+          }}
+        >
+          <div 
+            className="animate-scale-in"
+            onClick={e => e.stopPropagation()} 
+            style={{ 
+              background: '#FFFFFF', 
+              width: '100%', 
+              maxWidth: '680px', 
+              borderRadius: '28px', 
+              boxShadow: '0 40px 80px rgba(0,0,0,0.4)', 
+              overflow: 'hidden',
+              margin: 'auto'
+            }}
+          >
+            {/* HEADER */}
+            <div style={{ padding: 'clamp(1.25rem, 5vw, 2rem) clamp(1.25rem, 5vw, 2.5rem) 1.25rem', borderBottom: '2px solid #FFF5F5', background: 'linear-gradient(135deg, #fff 0%, #FFF5F5 100%)' }}>
+              <div style={{ fontSize: '0.5rem', color: 'var(--ff-primary)', fontWeight: 900, letterSpacing: '0.25em', marginBottom: '0.4rem', textTransform: 'uppercase' }}>Squad Dossier</div>
+              <h2 style={{ fontFamily: 'var(--font-head)', fontSize: 'clamp(1.4rem, 5vw, 2.2rem)', margin: 0, color: '#1a1a1a', lineHeight: 1.1, wordBreak: 'break-word', textTransform: 'uppercase' }}>
+                {isEditing ? '✏️ Editing Record' : selectedTeam.team_name}
+              </h2>
             </div>
-            
-            <div style={{ padding: '2.5rem', maxHeight: '60vh', overflowY: 'auto' }}>
+
+            {/* SCROLLABLE BODY */}
+            <div style={{ padding: 'clamp(1.25rem, 5vw, 2rem) clamp(1.25rem, 5vw, 2.5rem)', maxHeight: '70vh', overflowY: 'auto' }}>
               {isEditing ? (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
                   <div className="form-group"><label className="form-label">TEAM NAME</label><input className="form-input" value={editForm.team_name} onChange={e => setEditForm({...editForm, team_name: e.target.value})} /></div>
@@ -238,62 +344,106 @@ export default function TeamsPage() {
                   </div>
                 </div>
               ) : (
-                <div>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem', marginBottom: '2rem' }}>
-                    <div><div className="form-label">LEADER</div><div style={{ fontWeight: 700 }}>{selectedTeam.leader_name}</div></div>
-                    <div><div className="form-label">WHATSAPP</div><div style={{ fontWeight: 700 }}>{selectedTeam.phone}</div></div>
-                    <div><div className="form-label">MODE</div><div style={{ fontWeight: 800, color: 'var(--ff-primary)' }}>{selectedTeam.mode}</div></div>
-                  </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
 
-                  {/* PAYMENT RECEIPT PORTAL */}
-                  <div style={{ borderTop: '1px solid var(--rose-50)', paddingTop: '2rem', marginBottom: '2.5rem' }}>
-                    <div className="form-label" style={{ marginBottom: '1.2rem' }}>VERIFIED TRANSACTION PROOF</div>
-                    <div style={{ width: '100%', height: '350px', background: 'var(--rose-50)', borderRadius: '24px', overflow: 'hidden', border: '1px solid var(--rose-100)', position: 'relative' }}>
-                       {selectedTeam.payment_screenshot ? (
-                         <img src={selectedTeam.payment_screenshot} alt="RECEIPT" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
-                       ) : (
-                         <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: 0.3, flexDirection: 'column', gap: '0.8rem' }}>
-                            <span style={{ fontSize: '1.5rem' }}>📄</span>
-                            <span style={{ fontWeight: 800, fontSize: '0.6rem' }}>NO RECEIPT UPLOADED</span>
-                         </div>
-                       )}
+                  {/* INFO GRID */}
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 160px), 1fr))', gap: '1rem' }}>
+                    <div style={{ background: '#FFF5F5', padding: '1rem', borderRadius: '12px' }}>
+                      <div style={{ fontSize: '0.55rem', color: '#9ca3af', fontWeight: 800, letterSpacing: '0.15em', marginBottom: '0.4rem' }}>LEADER</div>
+                      <div style={{ fontWeight: 800, fontSize: '0.9rem', color: '#1a1a1a' }}>{selectedTeam.leader_name}</div>
+                    </div>
+                    <div style={{ background: '#FFF5F5', padding: '1rem', borderRadius: '12px' }}>
+                      <div style={{ fontSize: '0.55rem', color: '#9ca3af', fontWeight: 800, letterSpacing: '0.15em', marginBottom: '0.4rem' }}>WHATSAPP</div>
+                      <div style={{ fontWeight: 800, fontSize: '0.9rem', color: '#1a1a1a' }}>{selectedTeam.phone}</div>
+                    </div>
+                    <div style={{ background: 'rgba(255,140,0,0.06)', padding: '1rem', borderRadius: '12px', border: '1px solid rgba(255,140,0,0.15)' }}>
+                      <div style={{ fontSize: '0.55rem', color: '#9ca3af', fontWeight: 800, letterSpacing: '0.15em', marginBottom: '0.4rem' }}>MODE</div>
+                      <div style={{ fontWeight: 900, fontSize: '1rem', color: 'var(--ff-primary)' }}>{selectedTeam.mode}</div>
                     </div>
                   </div>
 
-                  <div style={{ borderTop: '1px solid var(--rose-50)', paddingTop: '2rem' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
-                      <span className="form-label">PAYMENT STATUS</span>
-                      <span style={{ fontSize: '0.8rem', fontWeight: 900, color: selectedTeam.payment_status === 'approved' ? '#059669' : '#D97706' }}>{(selectedTeam.payment_status || 'PENDING').toUpperCase()}</span>
-                    </div>
-
-                    <div style={{ display: 'flex', gap: '1rem' }}>
-                       <button onClick={() => updateTeamPaymentStatus(selectedTeam.id, 'approved').then(() => { notify("SQUAD VERIFIED", "success"); fetchTeams(); handleCloseModal(); })} className="btn-primary" style={{ flex: 1, background: '#059669', border: 'none' }}>APPROVE ✓</button>
-                       <button onClick={() => updateTeamPaymentStatus(selectedTeam.id, 'rejected').then(() => { notify("SQUAD REJECTED", "error"); fetchTeams(); handleCloseModal(); })} className="btn-delete" style={{ flex: 1, border: '1px solid #FECACA', background: 'none' }}>REJECT ×</button>
+                  {/* RECEIPT */}
+                  <div style={{ borderTop: '1px solid #FFF0F0', paddingTop: '1.5rem' }}>
+                    <div style={{ fontSize: '0.6rem', fontWeight: 900, letterSpacing: '0.15em', color: '#9ca3af', marginBottom: '1rem' }}>PAYMENT RECEIPT</div>
+                    <div style={{ width: '100%', height: '220px', background: '#FFF5F5', borderRadius: '16px', overflow: 'hidden', border: '2px dashed #FECACA', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      {selectedTeam.payment_screenshot_url ? (
+                        <img src={selectedTeam.payment_screenshot_url} alt="Receipt" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                      ) : (
+                        <div style={{ textAlign: 'center', opacity: 0.3 }}>
+                          <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>📄</div>
+                          <div style={{ fontSize: '0.65rem', fontWeight: 800 }}>NO RECEIPT UPLOADED</div>
+                        </div>
+                      )}
                     </div>
                   </div>
-                  
-                  <div style={{ borderTop: '1px solid var(--rose-50)', paddingTop: '2.5rem', marginTop: '2.5rem' }}>
-                    <div className="form-label" style={{ marginBottom: '1.5rem' }}>SQUAD ROSTER ({selectedTeam.players?.length || 0})</div>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '1rem' }}>
+
+                  {/* PAYMENT STATUS + ACTIONS */}
+                  <div style={{ borderTop: '1px solid #FFF0F0', paddingTop: '1.5rem' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                      <span style={{ fontSize: '0.6rem', fontWeight: 900, letterSpacing: '0.15em', color: '#9ca3af' }}>PAYMENT STATUS</span>
+                      <span style={{ 
+                        fontSize: '0.7rem', fontWeight: 900, padding: '0.3rem 0.8rem', borderRadius: '20px',
+                        background: selectedTeam.payment_status === 'approved' ? '#ECFDF5' : selectedTeam.payment_status === 'rejected' ? '#FEF2F2' : '#FFFBEB',
+                        color: selectedTeam.payment_status === 'approved' ? '#059669' : selectedTeam.payment_status === 'rejected' ? '#DC2626' : '#D97706',
+                        border: `1px solid currentColor`
+                      }}>{(selectedTeam.payment_status || 'PENDING').toUpperCase()}</span>
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 200px), 1fr))', gap: '0.75rem' }}>
+                      <button 
+                        onClick={() => updateTeamPaymentStatus(selectedTeam.id, 'approved').then(() => { notify('SQUAD VERIFIED', 'success'); fetchTeams(); handleCloseModal(); })} 
+                        style={{ background: 'linear-gradient(135deg, #059669, #047857)', color: '#FFF', border: 'none', padding: '0.9rem', fontWeight: 900, borderRadius: '12px', cursor: 'pointer', fontSize: '0.75rem', letterSpacing: '0.05em' }}
+                      >✓ APPROVE</button>
+                      <button 
+                        onClick={() => updateTeamPaymentStatus(selectedTeam.id, 'rejected').then(() => { notify('SQUAD REJECTED', 'error'); fetchTeams(); handleCloseModal(); })} 
+                        style={{ background: 'none', color: '#DC2626', border: '1.5px solid #FECACA', padding: '0.9rem', fontWeight: 900, borderRadius: '12px', cursor: 'pointer', fontSize: '0.75rem', letterSpacing: '0.05em' }}
+                      >✗ REJECT</button>
+                    </div>
+                  </div>
+
+                  {/* SQUAD ROSTER */}
+                  <div style={{ borderTop: '1px solid #FFF0F0', paddingTop: '1.5rem' }}>
+                    <div style={{ fontSize: '0.6rem', fontWeight: 900, letterSpacing: '0.15em', color: '#9ca3af', marginBottom: '1rem' }}>SQUAD ROSTER ({selectedTeam.players?.length || 0})</div>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 140px), 1fr))', gap: '0.75rem' }}>
                       {selectedTeam.players?.map((p: any, i: number) => (
-                        <div key={i} style={{ padding: '1rem', background: 'var(--rose-50)', borderRadius: '12px' }}>
-                          <div style={{ fontWeight: 800, fontSize: '0.8rem' }}>{p.in_game_name}</div>
-                          <div style={{ opacity: 0.5, fontSize: '0.7rem' }}>UID: {p.game_uid}</div>
+                        <div key={i} style={{ padding: '0.75rem 1rem', background: '#FFF5F5', borderRadius: '10px', borderLeft: '3px solid var(--ff-primary)' }}>
+                          <div style={{ fontWeight: 800, fontSize: '0.8rem', color: '#1a1a1a' }}>{p.in_game_name}</div>
+                          <div style={{ fontSize: '0.65rem', color: '#9ca3af', marginTop: '0.2rem' }}>UID: {p.game_uid}</div>
                         </div>
                       ))}
                     </div>
                   </div>
+
                 </div>
               )}
             </div>
-            
-            <div style={{ padding: '1.5rem 2.5rem', background: 'var(--rose-50)', display: 'flex', gap: '1rem' }}>
-               {!isEditing && <button className="btn-secondary" style={{ flex: 1 }} onClick={() => setIsEditing(true)}>EDIT RECORD</button>}
-               <button className="btn-secondary" style={{ flex: 1 }} onClick={handleCloseModal}>CLOSE</button>
+
+            {/* FOOTER */}
+            <div style={{ padding: '1.25rem 2.5rem', background: '#FFF5F5', display: 'flex', gap: '0.75rem', borderTop: '1px solid #FEE2E2' }}>
+              {!isEditing && (
+                <button 
+                  className="btn-secondary" 
+                  style={{ flex: 1 }} 
+                  onClick={() => { setIsEditing(true); setEditForm({ team_name: selectedTeam.team_name, leader_name: selectedTeam.leader_name, phone: selectedTeam.phone }); }}
+                >
+                  EDIT RECORD
+                </button>
+              )}
+              <button className="btn-secondary" style={{ flex: 1 }} onClick={handleCloseModal}>CLOSE</button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
+
+      <ConfirmModal 
+        isOpen={!!teamToDelete}
+        title="TERMINATE SQUAD?"
+        message="This will permanently delete the squad and all its registered players from the tournament roster. This action is irreversible."
+        onConfirm={confirmDeleteTeam}
+        onCancel={() => setTeamToDelete(null)}
+        confirmText="TERMINATE"
+        type="danger"
+      />
     </div>
   );
 }

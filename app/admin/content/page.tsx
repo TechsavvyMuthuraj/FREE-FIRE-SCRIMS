@@ -10,6 +10,7 @@ import {
   getLandingContent, updateLandingContent 
 } from "../actions";
 import Toast from "../../../components/Toast";
+import ConfirmModal from "../../../components/ConfirmModal";
 
 export default function ContentEditorPage() {
   const [activeTab, setActiveTab] = useState<"tournaments" | "prizes" | "rules" | "stats" | "site_text">("tournaments");
@@ -24,6 +25,7 @@ export default function ContentEditorPage() {
   const [saving, setSaving] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [toast, setToast] = useState<{msg: string, type: 'success' | 'error' | 'warning' | null}>({ msg: "", type: null });
+  const [ruleToDelete, setRuleToDelete] = useState<string | null>(null);
   
   // Edit states
   const [editData, setEditData] = useState<any>({});
@@ -130,16 +132,22 @@ export default function ContentEditorPage() {
   };
 
   const handleDeleteRule = async (id: string) => {
-    if (!confirm("Delete this rule?")) return;
+    setRuleToDelete(id);
+  };
+
+  const confirmDeleteRule = async () => {
+    if (!ruleToDelete) return;
     setSaving(true);
     try {
-      await deleteLandingRule(id);
+      await deleteLandingRule(ruleToDelete);
       await fetchData();
       notify("RULE DELETED PERMANENTLY", "success");
     } catch (err) {
       notify("RULE DELETION REJECTED", "error");
+    } finally {
+      setSaving(false);
+      setRuleToDelete(null);
     }
-    setSaving(false);
   };
 
   const handleAddNewRule = () => {
@@ -156,7 +164,7 @@ export default function ContentEditorPage() {
         LANDING PAGE CONTENT
       </div>
       
-      <div className="table-tabs" style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem', borderBottom: '1px solid var(--ff-border)' }}>
+      <div className="table-tabs" style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem', borderBottom: '1px solid var(--ff-border)', flexWrap: 'wrap', overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
         <button 
           className={`tab-btn ${activeTab === 'tournaments' ? 'active' : ''}`}
           onClick={() => setActiveTab('tournaments')}
@@ -189,42 +197,42 @@ export default function ContentEditorPage() {
         </button>
       </div>
 
-      <div className="table-wrap" style={{ padding: '1.5rem' }}>
+      <div className="table-wrap" style={{ padding: 'clamp(1rem, 4vw, 1.5rem)' }}>
         {loading ? (
           <div style={{ padding: '3rem', textAlign: 'center', color: 'var(--ff-muted)', fontFamily: 'var(--font-mono)' }}>SYNCHRONIZING CONTENT...</div>
         ) : (
           <>
             {/* TOURNAMENTS TAB */}
             {activeTab === 'tournaments' && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
                 {tournaments.map(t => (
-                  <div key={t.id} style={{ border: '1px solid var(--ff-border)', borderRadius: '8px', padding: '1.25rem', background: editingId === t.id ? 'rgba(255,140,0,0.03)' : 'transparent' }}>
+                  <div key={t.id} style={{ border: '1px solid var(--ff-border)', borderRadius: '16px', padding: 'clamp(1rem, 5vw, 1.75rem)', background: editingId === t.id ? 'rgba(255,140,0,0.03)' : 'transparent', boxShadow: editingId === t.id ? '0 10px 40px rgba(0,0,0,0.05)' : 'none' }}>
                     {editingId === t.id ? (
-                      <div className="form-row" style={{ flexDirection: 'column', gap: '1rem', width: '100%' }}>
-                        <div style={{ display: 'flex', gap: '1rem' }}>
-                          <div className="form-group" style={{ flex: 1 }}>
+                      <div className="form-row" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', width: '100%' }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 140px), 1fr))', gap: '1rem' }}>
+                          <div className="form-group">
                             <label className="form-label">Mode Tag</label>
                             <input className="form-input" value={editData.mode_tag} onChange={e => setEditData({...editData, mode_tag: e.target.value})} />
                           </div>
-                          <div className="form-group" style={{ flex: 2 }}>
+                          <div className="form-group" style={{ flex: '1 1 200px' }}>
                             <label className="form-label">Mode Name</label>
                             <input className="form-input" value={editData.mode_name} onChange={e => setEditData({...editData, mode_name: e.target.value})} />
                           </div>
                         </div>
                         <div className="form-group">
                           <label className="form-label">Description</label>
-                          <textarea className="form-input" value={editData.description} onChange={e => setEditData({...editData, description: e.target.value})} rows={3} />
+                          <textarea className="form-input" value={editData.description} onChange={e => setEditData({...editData, description: e.target.value})} rows={3} style={{ resize: 'none' }} />
                         </div>
-                        <div style={{ display: 'flex', gap: '1rem' }}>
-                          <div className="form-group" style={{ flex: 1 }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 140px), 1fr))', gap: '1rem' }}>
+                          <div className="form-group">
                             <label className="form-label">Teams Limit</label>
                             <input className="form-input" value={editData.teams} onChange={e => setEditData({...editData, teams: e.target.value})} />
                           </div>
-                          <div className="form-group" style={{ flex: 1 }}>
+                          <div className="form-group">
                             <label className="form-label">Format</label>
                             <input className="form-input" value={editData.format} onChange={e => setEditData({...editData, format: e.target.value})} />
                           </div>
-                          <div className="form-group" style={{ flex: 1 }}>
+                          <div className="form-group">
                             <label className="form-label">Prize Config</label>
                             <input className="form-input" value={editData.prize} onChange={e => setEditData({...editData, prize: e.target.value})} />
                           </div>
@@ -233,9 +241,9 @@ export default function ContentEditorPage() {
                           <label className="form-label">Match Date/Time</label>
                           <input className="form-input" value={editData.match_time || ''} onChange={e => setEditData({...editData, match_time: e.target.value})} placeholder="e.g. 31 MARCH, 09:30 PM" />
                         </div>
-                        <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end', marginTop: '0.5rem' }}>
-                          <button className="action-btn" onClick={handleCancel}>CANCEL</button>
-                          <button className="action-btn" style={{ background: 'var(--ff-primary)', color: '#000' }} onClick={handleSaveTournament} disabled={saving}>{saving ? 'SAVING...' : 'SAVE'}</button>
+                        <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end', marginTop: '0.5rem', flexWrap: 'wrap' }}>
+                          <button className="action-btn" onClick={handleCancel} style={{ flex: '1 1 120px' }}>CANCEL</button>
+                          <button className="action-btn" style={{ background: 'var(--ff-primary)', color: '#000', flex: '1 1 120px' }} onClick={handleSaveTournament} disabled={saving}>{saving ? 'SAVING...' : 'SAVE CONFIG'}</button>
                         </div>
                       </div>
                     ) : (
@@ -255,46 +263,46 @@ export default function ContentEditorPage() {
               </div>
             )}
 
-            {/* PRIZES TAB */}
-            {activeTab === 'prizes' && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                {prizes.map(p => (
-                  <div key={p.id} style={{ border: '1px solid var(--ff-border)', borderRadius: '8px', padding: '1.25rem', background: editingId === p.id ? 'rgba(255,140,0,0.03)' : 'transparent' }}>
-                     {editingId === p.id ? (
-                      <div className="form-row" style={{ flexDirection: 'column', gap: '1rem', width: '100%' }}>
-                        <div style={{ display: 'flex', gap: '1rem' }}>
-                          <div className="form-group" style={{ flex: 1 }}>
-                            <label className="form-label">Rank Label</label>
-                            <input className="form-input" value={editData.rank_label} onChange={e => setEditData({...editData, rank_label: e.target.value})} />
+             {/* PRIZES TAB */}
+             {activeTab === 'prizes' && (
+               <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                 {prizes.map(p => (
+                   <div key={p.id} style={{ border: '1px solid var(--ff-border)', borderRadius: '8px', padding: '1.25rem', background: editingId === p.id ? 'rgba(255,140,0,0.03)' : 'transparent' }}>
+                      {editingId === p.id ? (
+                        <div className="form-row" style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', width: '100%' }}>
+                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 150px), 1fr))', gap: '1.25rem' }}>
+                            <div className="form-group">
+                              <label className="form-label">Rank Label</label>
+                              <input className="form-input" value={editData.rank_label} onChange={e => setEditData({...editData, rank_label: e.target.value})} />
+                            </div>
+                            <div className="form-group">
+                              <label className="form-label">Placement</label>
+                              <input className="form-input" value={editData.place} onChange={e => setEditData({...editData, place: e.target.value})} />
+                            </div>
+                            <div className="form-group">
+                              <label className="form-label">Prize Amount</label>
+                              <input className="form-input" value={editData.amount} onChange={e => setEditData({...editData, amount: e.target.value})} />
+                            </div>
                           </div>
-                          <div className="form-group" style={{ flex: 1 }}>
-                            <label className="form-label">Placement</label>
-                            <input className="form-input" value={editData.place} onChange={e => setEditData({...editData, place: e.target.value})} />
-                          </div>
-                          <div className="form-group" style={{ flex: 1 }}>
-                            <label className="form-label">Prize Amount</label>
-                            <input className="form-input" value={editData.amount} onChange={e => setEditData({...editData, amount: e.target.value})} />
+                          <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end', marginTop: '0.5rem', flexWrap: 'wrap' }}>
+                            <button className="action-btn" onClick={handleCancel} style={{ flex: '1 1 120px' }}>CANCEL</button>
+                            <button className="action-btn" style={{ background: 'var(--ff-primary)', color: '#000', flex: '1 1 120px' }} onClick={handleSavePrize} disabled={saving}>{saving ? 'SAVING...' : 'SAVE CONFIG'}</button>
                           </div>
                         </div>
-                        <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end', marginTop: '0.5rem' }}>
-                          <button className="action-btn" onClick={handleCancel}>CANCEL</button>
-                          <button className="action-btn" style={{ background: 'var(--ff-primary)', color: '#000' }} onClick={handleSavePrize} disabled={saving}>{saving ? 'SAVING...' : 'SAVE'}</button>
+                      ) : (
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                           <div>
+                            <div style={{ fontSize: '0.7rem', fontFamily: 'var(--font-mono)', letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--ff-muted)' }}>{p.rank_label}</div>
+                            <div style={{ fontSize: '1.5rem', fontFamily: 'var(--font-head)', fontWeight: 700, margin: '0.2rem 0' }}>{p.place}</div>
+                            <div style={{ color: 'var(--ff-primary)', fontFamily: 'var(--font-mono)', fontSize: '1.1rem' }}>{p.amount}</div>
+                          </div>
+                          <button className="small-btn" onClick={() => handleEdit(p)}>EDIT</button>
                         </div>
-                      </div>
-                    ) : (
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                         <div>
-                          <div style={{ fontSize: '0.7rem', fontFamily: 'var(--font-mono)', letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--ff-muted)' }}>{p.rank_label}</div>
-                          <div style={{ fontSize: '1.5rem', fontFamily: 'var(--font-head)', fontWeight: 700, margin: '0.2rem 0' }}>{p.place}</div>
-                          <div style={{ color: 'var(--ff-primary)', fontFamily: 'var(--font-mono)', fontSize: '1.1rem' }}>{p.amount}</div>
-                        </div>
-                        <button className="small-btn" onClick={() => handleEdit(p)}>EDIT</button>
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
+                      )}
+                   </div>
+                 ))}
+               </div>
+             )}
 
             {/* RULES TAB */}
             {activeTab === 'rules' && (
@@ -306,18 +314,18 @@ export default function ContentEditorPage() {
 
                 {editingId === 'new' && (
                   <div style={{ border: '2px dashed var(--ff-primary)', borderRadius: '8px', padding: '1.25rem', background: 'rgba(255,140,0,0.03)' }}>
-                    <div className="form-row" style={{ flexDirection: 'column', gap: '1rem', width: '100%' }}>
-                      <div className="form-group" style={{ maxWidth: '200px' }}>
+                    <div className="form-row" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', width: '100%' }}>
+                      <div className="form-group" style={{ maxWidth: 'min(100%, 240px)' }}>
                         <label className="form-label">Rule Keyword</label>
-                        <input className="form-input" value={editData.rule_number} onChange={e => setEditData({...editData, rule_number: e.target.value})} />
+                        <input className="form-input" value={editData.rule_number} onChange={e => setEditData({...editData, rule_number: e.target.value})} placeholder="e.g. RULE_01" />
                       </div>
                       <div className="form-group">
                         <label className="form-label">Rule Description</label>
-                        <textarea className="form-input" value={editData.description} onChange={e => setEditData({...editData, description: e.target.value})} rows={3} />
+                        <textarea className="form-input" value={editData.description} onChange={e => setEditData({...editData, description: e.target.value})} rows={3} style={{ resize: 'none' }} />
                       </div>
-                      <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end', marginTop: '0.5rem' }}>
-                        <button className="action-btn" onClick={handleCancel}>CANCEL</button>
-                        <button className="action-btn" style={{ background: 'var(--ff-primary)', color: '#000' }} onClick={handleSaveRule} disabled={saving}>CREATE</button>
+                      <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end', marginTop: '0.5rem', flexWrap: 'wrap' }}>
+                        <button className="action-btn" onClick={handleCancel} style={{ flex: '1 1 120px' }}>CANCEL</button>
+                        <button className="action-btn" style={{ background: 'var(--ff-primary)', color: '#000', flex: '1 1 120px' }} onClick={handleSaveRule} disabled={saving}>CREATE DIRECTIVE</button>
                       </div>
                     </div>
                   </div>
@@ -326,18 +334,18 @@ export default function ContentEditorPage() {
                 {rules.map(r => (
                   <div key={r.id} style={{ border: '1px solid var(--ff-border)', borderRadius: '8px', padding: '1.25rem', background: editingId === r.id ? 'rgba(255,140,0,0.03)' : 'transparent' }}>
                     {editingId === r.id ? (
-                      <div className="form-row" style={{ flexDirection: 'column', gap: '1rem', width: '100%' }}>
-                        <div className="form-group" style={{ maxWidth: '200px' }}>
+                      <div className="form-row" style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', width: '100%' }}>
+                        <div className="form-group" style={{ maxWidth: 'min(100%, 200px)' }}>
                           <label className="form-label">Rule Keyword</label>
                           <input className="form-input" value={editData.rule_number} onChange={e => setEditData({...editData, rule_number: e.target.value})} />
                         </div>
                         <div className="form-group">
                           <label className="form-label">Description</label>
-                          <textarea className="form-input" value={editData.description} onChange={e => setEditData({...editData, description: e.target.value})} rows={2} />
+                          <textarea className="form-input" value={editData.description} onChange={e => setEditData({...editData, description: e.target.value})} rows={2} style={{ resize: 'none' }} />
                         </div>
-                        <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end', marginTop: '0.5rem' }}>
-                          <button className="action-btn" onClick={handleCancel}>CANCEL</button>
-                          <button className="action-btn" style={{ background: 'var(--ff-primary)', color: '#000' }} onClick={handleSaveRule} disabled={saving}>SAVE</button>
+                        <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end', marginTop: '0.5rem', flexWrap: 'wrap' }}>
+                          <button className="action-btn" onClick={handleCancel} style={{ flex: '1 1 120px' }}>CANCEL</button>
+                          <button className="action-btn" style={{ background: 'var(--ff-primary)', color: '#000', flex: '1 1 120px' }} onClick={handleSaveRule} disabled={saving}>{saving ? 'SAVING...' : 'SAVE CONFIG'}</button>
                         </div>
                       </div>
                     ) : (
@@ -360,16 +368,16 @@ export default function ContentEditorPage() {
             {/* STATS TAB */}
             {activeTab === 'stats' && stats && (
               <div className="dash-card">
-                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', marginBottom: '2rem' }}>
-                   <div className="form-group">
-                     <label className="form-label">Teams Registered</label>
-                     <input className="form-input" value={editData.teams_registered ?? stats.teams_registered} onChange={e => setEditData({...editData, teams_registered: e.target.value})} />
-                   </div>
-                   <div className="form-group">
-                     <label className="form-label">Prize Pool Display</label>
-                     <input className="form-input" value={editData.prize_pool ?? stats.prize_pool} onChange={e => setEditData({...editData, prize_pool: e.target.value})} />
-                   </div>
-                 </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 280px), 1fr))', gap: '1.25rem', marginBottom: '1.5rem' }}>
+                    <div className="form-group">
+                      <label className="form-label">Teams Registered</label>
+                      <input className="form-input" value={editData.teams_registered ?? stats.teams_registered} onChange={e => setEditData({...editData, teams_registered: e.target.value})} />
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">Prize Pool Display</label>
+                      <input className="form-input" value={editData.prize_pool ?? stats.prize_pool} onChange={e => setEditData({...editData, prize_pool: e.target.value})} />
+                    </div>
+                  </div>
                  <button 
                   className="btn-primary" 
                   style={{ width: '100%', height: '52px' }} 
@@ -443,6 +451,15 @@ export default function ContentEditorPage() {
         .tab-btn:hover { color: var(--ff-primary); }
         .tab-btn.active { color: var(--ff-primary); border-bottom-color: var(--ff-primary); }
       `}</style>
+      <ConfirmModal 
+        isOpen={!!ruleToDelete}
+        title="RETRACT DIRECTIVE?"
+        message="This rule will be removed from the public landing page immediately. Are you sure you want to delete this directive?"
+        onConfirm={confirmDeleteRule}
+        onCancel={() => setRuleToDelete(null)}
+        confirmText="RETRACT"
+        type="danger"
+      />
     </div>
   );
 }

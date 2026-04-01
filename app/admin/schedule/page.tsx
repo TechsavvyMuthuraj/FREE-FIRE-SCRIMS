@@ -20,16 +20,31 @@ export default function SchedulePage() {
     setToast({ msg, type });
   };
 
-  const loadData = async () => {
-    setLoading(true);
-    try {
-      const [t, ms] = await Promise.all([getAdminTeams(), getAdminMatches()]);
-      setTeams(t.filter(team => team.payment_status === 'approved'));
-      // Only show upcoming/scheduled matches that haven't been completed
-      setMatches(ms.filter(m => m.status !== 'Completed'));
-    } catch (err) { notify("SYNC ERROR", "error"); }
-    setLoading(false);
-  };
+   const loadData = async () => {
+     setLoading(true);
+     
+     // 1. Load Matches (Critical for the dropdown)
+     try {
+       const ms = await getAdminMatches();
+       // Display all matches (Scheduled, Ongoing, and Completed)
+       setMatches(Array.isArray(ms) ? ms : []);
+     } catch (err) { 
+       console.error("Match Sync Error:", err);
+       notify("MATCH SYNC FAILED", "error"); 
+     }
+
+     // 2. Load Teams (For enlisting)
+     try {
+       const t = await getAdminTeams();
+       const approved = Array.isArray(t) ? t.filter(team => team.payment_status === 'approved') : [];
+       setTeams(approved);
+     } catch (err) {
+       console.error("Team Sync Error:", err);
+       // We don't notify here to avoid double toasts, or we can use a separate warning
+     }
+
+     setLoading(false);
+   };
 
   useEffect(() => { loadData(); }, []);
 
@@ -74,38 +89,65 @@ export default function SchedulePage() {
         WAR ROOM SCHEDULER
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1.2fr) minmax(0, 1fr)', gap: '2rem' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 340px), 1fr))', gap: '2rem' }}>
         
         <section>
           <div className="dash-card modern-card" style={{ padding: '2.5rem' }}>
-            <div className="section-label">ROOM SESSION SELECTION</div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+              <div className="section-label" style={{ marginBottom: 0 }}>ROOM SESSION SELECTION</div>
+              <button 
+                onClick={loadData} 
+                className="small-btn" 
+                style={{ background: 'var(--rose-100)', color: 'var(--ff-primary)', border: 'none', fontSize: '0.65rem' }}
+              >
+                🔄 REFRESH ({matches.length} MATCHES)
+              </button>
+            </div>
             
             <div className="form-group" style={{ marginTop: '1.5rem' }}>
                <label className="form-label">CHOOSE SCHEDULED MATCH</label>
                <select 
                  className="form-input" 
                  value={selectedMatchId} 
-                 onChange={e => { setSelectedMatchId(e.target.value); setSelectedSquads([]); }} 
+                 onChange={e => { 
+                    const mId = e.target.value;
+                    setSelectedMatchId(mId); 
+                    const match = matches.find(m => m.id === mId);
+                    if (match?.match_squads) {
+                        setSelectedSquads(match.match_squads.map((s: any) => s.team_id));
+                    } else {
+                        setSelectedSquads([]); 
+                    }
+                 }} 
                  style={{ background: 'var(--rose-50)', color: '#000', fontWeight: 700, height: '62px' }}
                >
                   <option value="">-- SELECT AN UPCOMING SESSION --</option>
-                  {matches.map(m => (
-                    <option key={m.id} value={m.id}>
-                       [{m.mode}] {m.map_name.toUpperCase()} - {new Date(m.match_date).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
-                    </option>
-                  ))}
+                   {matches.map(m => {
+                     const statusLabel = m.status === 'Completed' ? '[COMPLETED] ' : m.status === 'Ongoing' ? '[ONGOING] ' : '';
+                     return (
+                      <option key={m.id} value={m.id}>
+                         {statusLabel}[{m.mode}] {(m.map_name || 'TBD').toUpperCase()} - {m.match_date ? new Date(m.match_date).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'DATE TBD'}
+                      </option>
+                     );
+                   })}
                </select>
             </div>
 
             {selectedMatchId && (
                <div className="animate-scale-in" style={{ marginTop: '2.5rem' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1.5rem', alignItems: 'center' }}>
-                     <div className="section-label" style={{ marginBottom: 0, color: 'var(--ff-primary)' }}>
-                        ENLIST {mode} SQUADRONS ({selectedSquads.length}/{capacity})
-                     </div>
-                  </div>
+                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem', alignItems: 'center' }}>
+                       <div className="section-label" style={{ marginBottom: 0, color: selectedSquads.length >= capacity ? '#059669' : 'var(--ff-primary)' }}>
+                          ENLIST {mode} SQUADRONS ({selectedSquads.length}/{capacity}) {selectedSquads.length >= capacity && '— FULL'}
+                       </div>
+                   </div>
 
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))', gap: '0.8rem', maxHeight: '400px', overflowY: 'auto', padding: '1.5rem', background: 'var(--rose-50)', borderRadius: '24px' }}>
+                   {activeMatch?.match_squads?.length > 0 && (
+                      <div className="animate-up" style={{ padding: '0.75rem 1rem', background: 'var(--ff-primary)', color: '#000', borderRadius: '8px', fontSize: '0.65rem', fontWeight: 900, marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                         <span>⚠ THIS ROOM IS ALREADY IN USE ({activeMatch.match_squads.length}/{capacity} FULL)</span>
+                      </div>
+                   )}
+
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(110px, 1fr))', gap: '0.8rem', maxHeight: '400px', overflowY: 'auto', padding: '1.25rem', background: 'var(--rose-50)', borderRadius: '20px' }}>
                      {filteredTeams.length === 0 ? (
                        <div style={{ padding: '3rem', fontSize: '0.7rem', opacity: 0.5, textAlign: 'center' }}>NO APPROVED {mode} SQUADS AVAILABLE.</div>
                      ) : (
@@ -127,9 +169,16 @@ export default function SchedulePage() {
                      )}
                   </div>
 
-                  <button className="btn-primary" style={{ marginTop: '3rem', height: '62px' }} onClick={handleFinalize} disabled={saving}>
-                     {saving ? 'UNITING SQUADRONS...' : `FINALIZE ${mode} ROSTER 📡`}
-                  </button>
+                   <button 
+                     className="btn-primary" 
+                     style={{ marginTop: '3rem', height: '62px', opacity: selectedSquads.length === capacity ? 1 : 0.6 }} 
+                     onClick={handleFinalize} 
+                     disabled={saving || selectedSquads.length < capacity}
+                   >
+                       {saving ? 'UNITING SQUADRONS...' : 
+                        selectedSquads.length < capacity ? `WAITING FOR ${capacity - selectedSquads.length} MORE` : 
+                        activeMatch?.match_squads?.length > 0 ? `RE-FINALIZE ${mode} ROSTER 📡` : `FINALIZE ${mode} ROSTER 📡`}
+                   </button>
                </div>
             )}
           </div>

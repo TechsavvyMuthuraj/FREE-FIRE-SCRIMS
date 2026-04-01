@@ -19,7 +19,7 @@ export async function POST(req: Request) {
       );
     }
 
-    // 1. Insert Team into Supabase (No email field)
+    // 1. Insert Team into Supabase (Auto-generating dummy email to pass NOT NULL constraint)
     const { data: teamData, error: teamError } = await supabaseAdmin
       .from('teams')
       .insert([
@@ -27,6 +27,7 @@ export async function POST(req: Request) {
           team_name: teamName, 
           leader_name: leaderName, 
           phone, 
+          email: `${phone.replace(/\D/g, '')}@demonx.app`,
           mode,
           payment_status: 'pending',
           payment_screenshot_url: paymentScreenshotUrl

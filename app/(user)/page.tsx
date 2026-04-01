@@ -34,15 +34,15 @@ export default async function Home() {
 
       <UserStatusHeader />
       <div className="hero-glow-big"></div>
-      
+
       <div className="hero-centered">
         <div className="hero-content-wrap animate-up">
           <div className="hero-logo-container">
             <div className="logo-glow-ring"></div>
-            <img 
-              src="https://cdn.jsdelivr.net/gh/free-whiteboard-online/Free-Erasorio-Alternative-for-Collaborative-Design@1933e9c87d09100c38827b162b5505afb661bbd6/uploads/2026-03-31T14-11-12-736Z-pxddwx9ll.png" 
-              alt="Demon X Logo" 
-              className="hero-logo-hd" 
+            <img
+              src="https://cdn.jsdelivr.net/gh/free-whiteboard-online/Free-Erasorio-Alternative-for-Collaborative-Design@1933e9c87d09100c38827b162b5505afb661bbd6/uploads/2026-03-31T14-11-12-736Z-pxddwx9ll.png"
+              alt="Demon X Logo"
+              className="hero-logo-hd"
             />
           </div>
 
@@ -97,12 +97,12 @@ export default async function Home() {
               <div className="mode-name-luxe">{t.mode_name}</div>
               <p className="mode-desc-luxe">{t.description}</p>
               <div className="mode-meta-luxe">
-                  <div><span>POOL</span><strong>{t.teams}</strong></div>
-                  <div><span>PRIZE</span><strong>{t.prize}</strong></div>
-                  <div className="match-time-tag">
-                    <span>STATUS</span>
-                    <strong>LIVE ENROLL</strong>
-                  </div>
+                <div><span>POOL</span><strong>{t.teams}</strong></div>
+                <div><span>PRIZE</span><strong>{t.prize}</strong></div>
+                <div className="match-time-tag">
+                  <span>STATUS</span>
+                  <strong>LIVE ENROLL</strong>
+                </div>
               </div>
             </div>
           ))}
@@ -113,7 +113,7 @@ export default async function Home() {
         <div className="section" id="prizes">
           <div className="section-label animate-up">💎 REWARDS</div>
           <h2 className="section-title animate-up">{getText('prize_section_title', 'GRAND PRIZE POOL')}</h2>
-          
+
           <div className="prize-grid-luxe">
             {prizes.map((p: any, index: number) => (
               <div className={`prize-card-luxe ${p.tier} animate-up`} key={p.id} style={{ animationDelay: `${0.1 + index * 0.1}s` }}>
@@ -129,7 +129,7 @@ export default async function Home() {
       <div className="section" id="rules">
         <div className="section-label animate-up">📜 THE CODE</div>
         <h2 className="section-title animate-up">PLAYING FAIR</h2>
-        
+
         <div className="rules-list-luxe">
           {rules.map((r: any, index: number) => (
             <div className="rule-item-luxe animate-up" key={r.id} style={{ animationDelay: `${0.05 + index * 0.05}s` }}>
@@ -153,7 +153,7 @@ export default async function Home() {
       </div>
 
       <footer className="footer-luxe">
-        <p>© 2025 DEMON X LIVE | DESIGNED FOR THE ELITE | GARENA NOT AFFILIATED</p>
+        <p>© 2026 DEMON X LIVE | 💻 Developed by <strong>Muthuraj C</strong> | Not affiliated with Garena</p>
       </footer>
     </div>
   );

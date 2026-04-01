@@ -1,0 +1,282 @@
+/* ═══════════════════════════════════════════════════════
+   ADMIN GLOBAL RESPONSIVE — covers all admin pages
+   Applies across: dashboard, teams, schedule, matches,
+   results, content, settings, audit, match-lists
+   ═══════════════════════════════════════════════════════ */
+
+/* ── Prevent any element from blowing out the width ── */
+.admin-panel,
+.admin-panel * {
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+/* ── Form elements always stretch full width on mobile ── */
+.form-input,
+.form-select,
+.form-group input,
+.form-group select,
+.form-group textarea,
+.search-input,
+.filter-select {
+  min-width: 0;
+  width: 100%;
+}
+
+/* ── Buttons: prevent text overflow ── */
+.btn-primary,
+.small-btn,
+.action-btn {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ── Cards: always full-width ── */
+.dash-card,
+.modern-card,
+.table-wrap {
+  min-width: 0;
+  width: 100%;
+}
+
+/* ════════════════════════════════════
+   TABLET (≤ 1024px)
+   ════════════════════════════════════ */
+@media (max-width: 1024px) {
+  /* Dashboard: 2-column stats */
+  .dash-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 1rem !important;
+  }
+
+  /* All two-column sections: reduce gap */
+  [style*="gridTemplateColumns: '1.2fr 1fr'"],
+  [style*="gridTemplateColumns: '1.4fr 1fr'"],
+  [style*="gridTemplateColumns: 'minmax(0, 1.2fr) minmax(0, 1fr)'"],
+  [style*="gridTemplateColumns: 'minmax(0, 1.4fr) minmax(0, 1fr)'"] {
+    gap: 1.5rem !important;
+  }
+}
+
+/* ════════════════════════════════════
+   MOBILE (≤ 768px)
+   ════════════════════════════════════ */
+@media (max-width: 768px) {
+
+  /* ── PANEL WRAPPER ── */
+  .admin-panel {
+    padding-bottom: 3rem;
+    overflow-x: hidden;
+  }
+
+  /* ── STATS GRID: 2 per row ── */
+  .dash-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 0.875rem !important;
+    margin-bottom: 1.5rem !important;
+  }
+
+  .dash-card {
+    padding: 1rem !important;
+    border-radius: 16px !important;
+  }
+
+  .dash-card-value {
+    font-size: 1.75rem !important;
+  }
+
+  /* ── SECTION HEADER ── */
+  .admin-section-title {
+    font-size: 1.1rem !important;
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 0.75rem !important;
+    margin-bottom: 1.25rem !important;
+    padding-bottom: 0.75rem !important;
+    flex-wrap: wrap !important;
+  }
+
+  /* ── ALL TWO-COLUMN GRIDS → single column ── */
+  /* Catches all the hardcoded gridTemplateColumns on dashboard, schedule, results, settings */
+  .admin-panel > div > div[style*="grid"],
+  .admin-panel section,
+  .admin-panel > div[style*="grid"] {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 1.25rem !important;
+  }
+
+  /* ── FORM SECTIONS (schedule, matches, settings) ── */
+  .form-group {
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  .form-input,
+  .form-select,
+  .form-group input,
+  .form-group select,
+  .form-group textarea {
+    width: 100% !important;
+    min-width: 0 !important;
+    box-sizing: border-box !important;
+  }
+
+  /* ── SAVE / SUBMIT BUTTONS ── */
+  .btn-primary {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  /* Settings save button from flex-end → full width */
+  [style*="justify-content: flex-end"] {
+    justify-content: stretch !important;
+  }
+
+  /* ── TAB BAR ── */
+  .table-tabs {
+    flex-wrap: wrap !important;
+    gap: 0 !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+
+  .tab-btn {
+    font-size: 0.65rem !important;
+    padding: 0.75rem 1rem !important;
+    flex-shrink: 0 !important;
+  }
+
+  /* ── TABLES ── */
+  .table-wrap {
+    border-radius: 16px !important;
+    margin: 0 !important;
+  }
+
+  .table-scroll,
+  .table-wrap > div[style*="overflowX"] {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+
+  /* Force all data-tables to have a floor width so they scroll */
+  .data-table {
+    min-width: 520px !important;
+  }
+
+  .table-toolbar {
+    padding: 0.875rem !important;
+    gap: 0.75rem !important;
+    flex-wrap: wrap !important;
+  }
+
+  .search-input,
+  .filter-select {
+    flex: 1 !important;
+    min-width: 120px !important;
+    max-width: 100% !important;
+  }
+
+  /* ── MATCH CARD ACTION BUTTONS ── */
+  .match-actions,
+  [style*="display: 'flex'"][style*="gap: '0.8rem'"] {
+    flex-wrap: wrap !important;
+  }
+
+  .small-btn {
+    font-size: 0.6rem !important;
+    padding: 0.4rem 0.65rem !important;
+  }
+
+  /* ── RESULTS page: entry rows need horizontal scroll ── */
+  .entry-row-wrap {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* ── RESULTS: section header with search input ── */
+  [style*="display: 'flex'"][style*="justifyContent: 'space-between'"] {
+    flex-wrap: wrap !important;
+    gap: 0.75rem !important;
+  }
+
+  /* ── LEADERBOARD CARDS ── */
+  .leaderboard-row,
+  [style*="padding: '1.2rem 2rem'"] {
+    padding: 1rem !important;
+    flex-wrap: wrap !important;
+    gap: 0.5rem !important;
+  }
+
+  /* Results entry row header labels */
+  [style*="gridTemplateColumns: '2fr 0.8fr 0.8fr 0.8fr 1fr 0.3fr'"] {
+    display: none !important; /* hide labels on mobile — row handles it */
+  }
+
+  /* Results entry data rows → scroll */
+  [style*="gridTemplateColumns: '2fr 0.8fr 0.8fr 0.8fr 1fr 0.3fr'"] {
+    min-width: 480px !important;
+    overflow-x: auto !important;
+  }
+
+  /* ── BROADCAST panel 4-col → auto-fit ── */
+  [style*="gridTemplateColumns: 'repeat(4, 1fr)'"] {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+
+  /* ── SCHEDULE squad grid ── */
+  [style*="repeat(auto-fill, minmax(110px, 1fr))"] {
+    grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)) !important;
+  }
+
+  /* ── SETTINGS: registration toggle row ── */
+  [style*="is_registration_active"] {
+    flex-wrap: wrap !important;
+  }
+}
+
+/* ════════════════════════════════════
+   SMALL MOBILE (≤ 480px)
+   ════════════════════════════════════ */
+@media (max-width: 480px) {
+  .dash-grid {
+    grid-template-columns: 1fr 1fr !important;
+    gap: 0.625rem !important;
+  }
+
+  .dash-card-value {
+    font-size: 1.5rem !important;
+  }
+
+  .dash-card-label {
+    font-size: 0.6rem !important;
+    letter-spacing: 0.08em !important;
+  }
+
+  .admin-section-title {
+    font-size: 0.95rem !important;
+  }
+
+  /* Stack leaderboard rank badge + name vertically */
+  [style*="padding: '1.2rem 2rem'"] > div:first-child {
+    gap: 0.75rem !important;
+  }
+
+  .btn-primary {
+    font-size: 0.7rem !important;
+    padding: 0.875rem 1rem !important;
+  }
+
+  /* Tab buttons shrink further */
+  .tab-btn {
+    font-size: 0.6rem !important;
+    padding: 0.65rem 0.75rem !important;
+    letter-spacing: 0.05em !important;
+  }
+
+  /* Content page thumbnails / form sections */
+  .modern-card {
+    padding: 1.25rem !important;
+  }
+}

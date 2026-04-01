@@ -19,7 +19,7 @@ export default function RegistrationForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [paymentOptions, setPaymentOptions] = useState<any[]>([]);
   const [selectedPayment, setSelectedPayment] = useState<any>(null);
-  const [toast, setToast] = useState<{msg: string, type: 'success' | 'error' | 'warning' | null}>({ msg: "", type: null });
+  const [toast, setToast] = useState<{id: number, msg: string, type: 'success' | 'error' | 'warning' | null}>({ id: 0, msg: "", type: null });
 
   // Form State
   const [teamName, setTeamName] = useState("");
@@ -43,7 +43,7 @@ export default function RegistrationForm() {
   const [waGroupLink, setWaGroupLink] = useState("https://chat.whatsapp.com/LQDRfrdRLDP0b3KUSUYD3r");
 
   const notify = (msg: string, type: 'success' | 'error' | 'warning') => {
-    setToast({ msg, type });
+    setToast(prev => ({ id: prev.id + 1, msg, type }));
   };
 
   useEffect(() => {
@@ -63,6 +63,12 @@ export default function RegistrationForm() {
     }
     loadData();
   }, []);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }, [step]);
 
   const validateStep1 = () => {
     let newErrors: Record<string, string> = {};
@@ -111,11 +117,12 @@ export default function RegistrationForm() {
     if (n === 3 && !validateStep2()) return;
     if (n === 4) {
       if (!termsagreed) {
-        setErrors({ terms: "TERMS ACCEPTANCE REQUIRED" });
-        notify("YOU MUST AGREE TO THE CODE OF CONDUCT", "warning");
+        setErrors({ terms: "CONFIRMATION REQUIRED" });
+        notify("PLEASE CONFIRM ALL DETAILS ARE CORRECT", "warning");
         return;
       }
     }
+    setErrors({});
     setStep(n);
   };
 
@@ -183,75 +190,84 @@ export default function RegistrationForm() {
   };
   
   if (success) {
-    const whatsappMessage = `\u{1F525} *FF SCRIMS - REGISTRATION CONFIRMED* \u{1F525}\n` +
+    const whatsappMessage = `*🎮 FF SCRIMS - REGISTRATION CONFIRMED 🎮*\n\n` +
+      `🏆 *TEAM:* ${teamName}\n` +
+      `🆔 *TEAM ID:* ${teamId}\n` +
+      `📅 *DATE:* ${new Date().toLocaleDateString('en-GB')}\n\n` +
+      `👑 *LEADER:* ${leaderName}\n` +
+      `🎯 *MODE:* ${mode} MODE\n\n` +
+      `👥 *SQUAD MEMBERS:*\n${players.map((p, i) => `${i + 1}. ${i === 0 ? leaderName : p.name} (UID: ${i === 0 ? uid : p.uid})`).join('\n')}\n\n` +
+      `📲 *JOIN OFFICIAL WHATSAPP GROUP:*\n` +
+      `${waGroupLink}\n\n` +
       `----------------------------------------\n` +
-      `\u{2705} *TEAM ENLISTED:* ${teamName}\n` +
-      `\u{1F194} *TEAM ID:* ${teamId}\n` +
-      `\u{1F552} *REGISTERED:* ${new Date().toLocaleDateString('en-GB')}\n\n` +
-      `\u{1F464} *LEADER:* ${leaderName}\n` +
-      `\u{1F3AE} *MODE:* ${mode} MODE\n\n` +
-      `\u{1F465} *SQUAD MEMBERS:*\n${players.map((p, i) => `${i + 1}. ${i === 0 ? leaderName : p.name} (UID: ${i === 0 ? uid : p.uid})`).join('\n')}\n\n` +
-      `\u{1F4CC} *JOIN OFFICIAL WHATSAPP GROUP:*\n` +
-      `${waGroupLink}\n` +
-      `----------------------------------------\n` +
-      `_Match details (Room ID/Pass) will be shared via WhatsApp 15 mins before start._`;
+      `⏰ _Match details (Room ID/Pass) will be shared via WhatsApp 15 mins before start._`;
 
     return (
       <div className="success-page animate-up">
-        <div className="success-card">
-          <div className="success-icon">✓</div>
-          <h1 className="success-title">SQUAD ENLISTED</h1>
-          <p className="success-desc">
-            Welcome to the elite. Your registration is confirmed. We are now verifying your payment details.
-          </p>
-
-          <div className="team-id-box-luxe">
-            <div className="team-id-label">OFFICIAL TEAM ID</div>
-            <div className="team-id">{teamId}</div>
+        <div className="success-card" style={{ padding: '0', overflow: 'hidden' }}>
+          
+          <div style={{ background: 'linear-gradient(180deg, rgba(16, 185, 129, 0.15) 0%, rgba(17,17,17,0) 100%)', padding: '4rem 2rem 2rem', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+            <div className="success-icon" style={{ background: 'linear-gradient(135deg, #10B981, #059669)', border: 'none', color: '#000', boxShadow: '0 15px 40px rgba(16,185,129,0.4)', fontSize: '4rem', width: '100px', height: '100px' }}>🛡️</div>
+            <h1 className="success-title" style={{ fontSize: 'max(2rem, 5vw)', letterSpacing: '0.05em' }}>SQUAD ENLISTED</h1>
+            <p className="success-desc" style={{ fontSize: '1rem', opacity: 0.7, maxWidth: '400px', margin: '0 auto' }}>
+              Welcome to the elite tournament. Your roster has been securely registered and is pending payment verification.
+            </p>
           </div>
 
-          <div className="registration-details-luxe" style={{ textAlign: 'left', marginTop: '2rem', borderTop: '1px solid var(--rose-100)', paddingTop: '2rem' }}>
-            <div className="section-label" style={{ marginBottom: '1rem' }}>ENROLLMENT SUMMARY</div>
-            <table className="detail-table" style={{ width: '100%', borderCollapse: 'collapse' }}>
-              <tbody style={{ color: 'var(--ff-muted)', fontSize: '0.95rem' }}>
-                <tr style={{ height: '40px', borderBottom: '1px solid var(--rose-50)' }}>
-                  <td style={{ fontWeight: 600, color: 'var(--rose-900)' }}>Team Name</td>
-                  <td style={{ textAlign: 'right' }}>{teamName}</td>
-                </tr>
-                <tr style={{ height: '40px', borderBottom: '1px solid var(--rose-50)' }}>
-                  <td style={{ fontWeight: 600, color: 'var(--rose-900)' }}>Mode</td>
-                  <td style={{ textAlign: 'right', color: 'var(--ff-primary)', fontWeight: 800 }}>{mode}</td>
-                </tr>
-                <tr style={{ height: '40px' }}>
-                  <td style={{ fontWeight: 600, color: 'var(--rose-900)' }}>Leader</td>
-                  <td style={{ textAlign: 'right' }}>{leaderName}</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
+          <div style={{ padding: '3rem 2rem' }}>
+            <div className="team-id-box-luxe" style={{ background: '#000', border: '1px solid rgba(255,140,0,0.3)', padding: '2rem 1rem', width: '100%', maxWidth: '100%', borderRadius: '16px', margin: '0 0 2rem 0', wordBreak: 'break-word' }}>
+              <div className="team-id-label" style={{ color: 'var(--ff-primary)', letterSpacing: '0.2em', marginBottom: '0.5rem' }}>OFFICIAL SECURE ID</div>
+              <div className="team-id" style={{ fontSize: 'clamp(1.1rem, 6vw, 2.5rem)', letterSpacing: '0.05em', background: 'linear-gradient(90deg, #FFF, #AAA)', WebkitBackgroundClip: 'text', backgroundClip: 'text', WebkitTextFillColor: 'transparent', color: 'transparent', fontFamily: 'var(--font-mono)' }}>{teamId}</div>
+            </div>
 
-          <div className="success-actions">
-            <a 
-              href={`https://wa.me/${phone.replace(/\D/g, '')}?text=${encodeURIComponent(whatsappMessage)}`} 
-              target="_blank" 
-              rel="noopener noreferrer" 
-              className="btn-primary" 
-              style={{ background: '#25D366', color: '#000', borderColor: '#25D366' }}
-            >
-              WHATSAPP RECEIPT
-            </a>
-            <Link href="/" className="btn-secondary" style={{ background: 'rgba(255,140,0,0.1)', borderColor: 'var(--ff-primary)', color: 'var(--ff-primary)' }}>
-              BATTLE LOGS PORTAL
-            </Link>
+            <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '16px', padding: '2rem', textAlign: 'left', marginBottom: '3rem' }}>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', color: 'var(--ff-primary)', letterSpacing: '0.2em', fontWeight: 800, marginBottom: '1.5rem', borderBottom: '1px solid rgba(255,140,0,0.2)', paddingBottom: '0.8rem' }}>MISSION MANIFEST</div>
+              
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                <div className="manifest-row">
+                   <span style={{ color: 'var(--ff-muted)', fontSize: '0.8rem', fontWeight: 800, textTransform: 'uppercase' }}>Squad Name</span>
+                   <span style={{ color: '#FFF', fontWeight: 900, fontSize: '1rem', textShadow: '0 2px 10px rgba(0,0,0,0.5)' }}>{teamName}</span>
+                </div>
+                <div className="manifest-row">
+                   <span style={{ color: 'var(--ff-muted)', fontSize: '0.8rem', fontWeight: 800, textTransform: 'uppercase' }}>Competition Mode</span>
+                   <span style={{ color: 'var(--ff-primary)', fontWeight: 900, fontSize: '1rem' }}>{mode === 'CS' ? 'CLASH SQUAD' : 'BATTLE ROYALE'}</span>
+                </div>
+                <div className="manifest-row">
+                   <span style={{ color: 'var(--ff-muted)', fontSize: '0.8rem', fontWeight: 800, textTransform: 'uppercase' }}>Squad Leader</span>
+                   <span style={{ color: '#FFF', fontWeight: 900, fontSize: '1rem' }}>{leaderName}</span>
+                </div>
+                <div className="manifest-row">
+                   <span style={{ color: 'var(--ff-muted)', fontSize: '0.8rem', fontWeight: 800, textTransform: 'uppercase' }}>Payment Status</span>
+                   <span className="animate-pulse" style={{ color: '#FBBF24', background: 'rgba(251, 191, 36, 0.1)', border: '1px solid rgba(251, 191, 36, 0.2)', padding: '0.4rem 0.8rem', borderRadius: '8px', fontWeight: 900, fontSize: '0.75rem', letterSpacing: '0.1em', display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}>
+                     <span style={{ fontSize: '0.9rem' }}>⏳</span> PENDING REVIEW
+                   </span>
+                </div>
+              </div>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '1rem' }}>
+              <a 
+                href={`https://wa.me/${phone.replace(/\D/g, '')}?text=${encodeURIComponent(whatsappMessage)}`} 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                style={{ background: 'linear-gradient(135deg, #25D366, #128C7E)', color: '#FFF', padding: '1.2rem', borderRadius: '12px', fontWeight: 900, textDecoration: 'none', fontFamily: 'var(--font-head)', letterSpacing: '0.1em', fontSize: '1rem', boxShadow: '0 10px 30px rgba(37, 211, 102, 0.4)', transition: 'all 0.3s', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}
+              >
+                REQUEST VERIFICATION <span>📲</span>
+              </a>
+              <Link href="/" style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.2)', color: '#FFF', padding: '1.2rem', borderRadius: '12px', fontWeight: 900, textDecoration: 'none', fontFamily: 'var(--font-head)', letterSpacing: '0.1em', fontSize: '1rem', transition: 'all 0.3s', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
+                BATTLE LOGS PORTAL <span>⚔️</span>
+              </Link>
+            </div>
           </div>
         </div>
       </div>
     );
   }
 
+
   return (
     <div className="form-page animate-up">
-      <Toast message={toast.msg} type={toast.type} onClear={() => setToast({ msg: "", type: null })} />
+      <Toast key={toast.id} message={toast.msg} type={toast.type} onClear={() => setToast(prev => ({ ...prev, msg: "", type: null }))} />
 
       <div style={{ marginBottom: '2rem' }}>
         <Link href="/" style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', letterSpacing: '0.2em', color: 'var(--rose-400)', fontWeight: 700, textDecoration: 'none' }}>← BACK TO ARENA</Link>
@@ -340,25 +356,48 @@ export default function RegistrationForm() {
         {step === 3 && (
           <div className="animate-up">
             <div style={{ background: 'rgba(255,140,0,0.03)', borderRadius: '20px', padding: '2rem', marginBottom: '2rem', border: '1px solid var(--ff-primary)' }}>
-              <h3 style={{ fontFamily: 'var(--font-head)', color: 'var(--ff-primary)', marginBottom: '1rem' }}>{teamName}</h3>
-              <p style={{ color: 'var(--ff-muted)', fontSize: '0.8rem' }}>MODE: {mode}</p>
-              <p style={{ color: 'var(--ff-muted)', fontSize: '0.8rem' }}>LEADER: {leaderName} ({uid})</p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px dashed rgba(255,255,255,0.1)', paddingBottom: '0.8rem' }}>
+                   <span style={{ color: 'var(--ff-muted)', fontSize: '0.75rem', fontWeight: 800, letterSpacing: '0.1em' }}>TEAM NAME</span>
+                   <span style={{ color: 'var(--ff-primary)', fontWeight: 900, fontSize: '1.2rem', fontFamily: 'var(--font-head)', letterSpacing: '0.05em', textTransform: 'uppercase' }}>{teamName}</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px dashed rgba(255,255,255,0.1)', paddingBottom: '0.8rem' }}>
+                   <span style={{ color: 'var(--ff-muted)', fontSize: '0.75rem', fontWeight: 800, letterSpacing: '0.1em' }}>COMPETITION MODE</span>
+                   <span style={{ color: '#FFF', fontWeight: 800, fontSize: '0.9rem' }}>{mode === 'CS' ? 'CLASH SQUAD' : 'BATTLE ROYALE'}</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px dashed rgba(255,255,255,0.1)', paddingBottom: '0.8rem' }}>
+                   <span style={{ color: 'var(--ff-muted)', fontSize: '0.75rem', fontWeight: 800, letterSpacing: '0.1em' }}>SQUAD LEADER</span>
+                   <span style={{ color: '#FFF', fontWeight: 800, fontSize: '0.9rem', textAlign: 'right' }}>{leaderName} <br/><span style={{ opacity: 0.5, fontSize: '0.75rem', fontFamily: 'var(--font-mono)' }}>UID: {uid}</span></span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                   <span style={{ color: 'var(--ff-muted)', fontSize: '0.75rem', fontWeight: 800, letterSpacing: '0.1em' }}>WHATSAPP CONTACT</span>
+                   <span style={{ color: '#FFF', fontWeight: 800, fontSize: '0.9rem', fontFamily: 'var(--font-mono)', letterSpacing: '0.05em' }}>{phone}</span>
+                </div>
+              </div>
             </div>
 
-            <div style={{ background: '#FFF', border: '1px solid var(--rose-100)', borderRadius: '20px', padding: '2rem', marginBottom: '2rem' }}>
+            <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,140,0,0.2)', borderRadius: '20px', padding: '2rem', marginBottom: '2rem' }}>
               <div className="section-label">CONFIRMED ROSTER</div>
               {players.map((p, i) => (
-                <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '0.5rem 0', borderBottom: '1px solid var(--rose-50)' }}>
-                  <span style={{ fontWeight: 800 }}>0{i+1}</span>
-                  <span>{p.name}</span>
-                  <span style={{ fontFamily: 'var(--font-mono)', opacity: 0.6 }}>{p.uid}</span>
+                <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '0.5rem 0', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                  <span style={{ fontWeight: 800, color: 'var(--ff-primary)' }}>0{i+1}</span>
+                  <span style={{ color: '#FFF' }}>{i === 0 && p.name === "" ? leaderName : p.name}</span>
+                  <span style={{ fontFamily: 'var(--font-mono)', opacity: 0.6, color: '#FFF' }}>{i === 0 && p.uid === "" ? uid : p.uid}</span>
                 </div>
               ))}
             </div>
-            
-            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '2rem' }}>
-              <input type="checkbox" checked={termsagreed} onChange={e => setTermsagreed(e.target.checked)} />
-              <label style={{ fontSize: '0.8rem', opacity: 0.7 }}>I confirm that all details are correct.</label>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '2rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', padding: '1rem', background: errors.terms ? 'rgba(244, 63, 94, 0.1)' : 'transparent', border: errors.terms ? '1px solid #F43F5E' : '1px transparent', borderRadius: '12px', transition: 'all 0.3s' }}>
+                <input id="terms-check" type="checkbox" checked={termsagreed} onChange={e => { 
+                  setTermsagreed(e.target.checked); 
+                  setErrors({...errors, terms: ""});
+                  if (e.target.checked && toast.msg.includes("CONFIRM")) {
+                    setToast(prev => ({ ...prev, msg: "", type: null }));
+                  }
+                }} style={{ transform: 'scale(1.2)', cursor: 'pointer' }} />
+                <label htmlFor="terms-check" style={{ fontSize: '0.8rem', opacity: 0.9, color: errors.terms ? '#F43F5E' : '#FFF', cursor: 'pointer', userSelect: 'none' }}>I confirm that all details are correct.</label>
+              </div>
+              {errors.terms && <div className="animate-scale-in" style={{ color: '#F43F5E', fontSize: '0.75rem', fontWeight: 900, letterSpacing: '0.1em', paddingLeft: '1rem', marginTop: '-0.3rem' }}>⚠ PLEASE CHECK THE CONFIRMATION BOX TO PROCEED</div>}
             </div>
             
             <div style={{ display: 'flex', gap: '1rem' }}>
@@ -380,24 +419,59 @@ export default function RegistrationForm() {
                     border: selectedPayment?.id === pay.id ? '2px solid var(--ff-primary)' : '1px solid var(--rose-100)',
                     padding: '1rem',
                     borderRadius: '16px',
-                    background: selectedPayment?.id === pay.id ? 'rgba(255,140,0,0.05)' : '#FFF',
-                    opacity: selectedPayment?.id === pay.id ? 1 : 0.5
+                    background: selectedPayment?.id === pay.id ? 'rgba(255,140,0,0.05)' : 'rgba(255,255,255,0.02)',
+                    opacity: selectedPayment?.id === pay.id ? 1 : 0.6
                   }}
                 >
-                  <div style={{ fontWeight: 800, fontSize: '0.7rem', color: 'var(--ff-primary)', marginBottom: '0.5rem' }}>{pay.label}</div>
-                  <img src={pay.qr_url} style={{ width: '100%', borderRadius: '4px' }} />
-                  <div style={{ fontSize: '1.2rem', fontWeight: 900, marginTop: '0.5rem', textAlign: 'center' }}>{pay.fee || '₹ FREE'}</div>
+                  <div style={{ fontWeight: 800, fontSize: '0.75rem', color: 'var(--ff-primary)', marginBottom: '0.5rem', letterSpacing: '0.1em' }}>{pay.label}</div>
+                  <img src={pay.qr_url} style={{ width: '100%', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)' }} alt="QR" />
+                  
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginTop: '0.8rem' }}>
+                    <div style={{ fontSize: '1.2rem', fontWeight: 900, color: '#FFF' }}>{pay.fee || '₹ FREE'}</div>
+                    {pay.upi_id && (
+                      <div style={{ fontSize: '0.8rem', fontWeight: 800, color: 'rgba(255,255,255,0.8)', letterSpacing: '0.05em', marginTop: '0.3rem', fontFamily: 'var(--font-mono)', background: 'rgba(255,255,255,0.05)', padding: '0.2rem 0.6rem', borderRadius: '4px' }}>
+                        ID: {pay.upi_id}
+                      </div>
+                    )}
+                  </div>
                 </div>
               ))}
             </div>
 
-            <div className="form-group" style={{ background: 'var(--rose-50)', padding: '2rem', borderRadius: '20px', border: '1px dashed var(--ff-primary)', textAlign: 'center' }}>
-               <input type="file" onChange={handleFileChange} style={{ cursor: 'pointer' }} />
-               <p style={{ fontSize: '0.7rem', color: 'var(--ff-muted)', marginTop: '0.5rem' }}>IMAGE FILES ONLY</p>
+            <div className="form-group" style={{ position: 'relative', overflow: 'hidden', background: paymentScreenshot ? 'rgba(16, 185, 129, 0.05)' : 'rgba(255, 140, 0, 0.03)', padding: '3.5rem 2rem', borderRadius: '24px', border: `2px dashed ${paymentScreenshot ? '#10B981' : 'var(--ff-primary)'}`, textAlign: 'center', transition: 'all 0.4s cubic-bezier(0.23, 1, 0.32, 1)' }}>
+               {/* INVISIBLE HITBOX FOR DRAG & DROP AND CLICKING */}
+               <input 
+                 type="file" 
+                 onChange={handleFileChange} 
+                 accept="image/*"
+                 style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', opacity: 0, cursor: 'pointer', zIndex: 10 }} 
+               />
+               
+               {/* VISUAL PRESENTATION */}
+               <div style={{ pointerEvents: 'none', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.8rem', transition: 'transform 0.3s', transform: paymentScreenshot ? 'scale(1.05)' : 'scale(1)' }}>
+                 {paymentScreenshot ? (
+                   <>
+                     <div style={{ fontSize: '3.5rem', filter: 'drop-shadow(0 10px 20px rgba(16,185,129,0.3))' }}>✅</div>
+                     <span style={{ fontFamily: 'var(--font-head)', fontSize: '1.4rem', color: '#10B981', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.05em' }}>RECEIPT ATTACHED</span>
+                     <p style={{ fontSize: '0.85rem', color: '#FFF', fontFamily: 'var(--font-mono)' }}>{paymentScreenshot.name}</p>
+                     <p style={{ fontSize: '0.65rem', color: 'var(--ff-muted)', marginTop: '0.5rem', fontWeight: 800, letterSpacing: '0.1em' }}>DRAG NEW FILE TO REPLACE</p>
+                   </>
+                 ) : (
+                   <>
+                     <div className="animate-scale-in" style={{ fontSize: '3.5rem', filter: 'drop-shadow(0 10px 20px rgba(255,140,0,0.3))', marginBottom: '0.5rem' }}>🧾</div>
+                     <span className="animate-scale-in" style={{ fontFamily: 'var(--font-head)', fontSize: '1.4rem', color: '#FFF', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.05em' }}>DROP RECEIPT HERE</span>
+                     <p className="animate-scale-in" style={{ fontSize: '0.65rem', color: 'var(--ff-muted)', fontWeight: 800, letterSpacing: '0.1em' }}>ONLY JPG OR PNG FORMAT ACCEPTED</p>
+                     
+                     <div className="animate-up" style={{ marginTop: '1.5rem', background: 'linear-gradient(135deg, var(--ff-primary), #D97706)', padding: '0.8rem 2.8rem', borderRadius: '30px', color: '#000', fontFamily: 'var(--font-head)', fontWeight: 900, fontSize: '0.9rem', letterSpacing: '0.15em', boxShadow: '0 10px 30px rgba(255,140,0,0.3)' }}>
+                        BROWSE DEVICE 📸
+                     </div>
+                   </>
+                 )}
+               </div>
             </div>
 
             <div style={{ display: 'flex', gap: '1rem', marginTop: '2rem' }}>
-              <button className="btn-secondary" onClick={() => setStep(3)} style={{ flex: 1 }} disabled={isSubmitting}>BACK</button>
+              <button className="btn-secondary" onClick={() => { setPaymentScreenshot(null); setStep(3); }} style={{ flex: 1 }} disabled={isSubmitting}>BACK</button>
               <button className="form-submit" style={{ flex: 2, marginTop: 0 }} onClick={handleSubmit} disabled={isSubmitting}>
                 {isSubmitting ? "PROCESSING..." : "FINALIZE REGISTRATION"}
               </button>

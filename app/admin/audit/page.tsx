@@ -54,21 +54,21 @@ export default function AuditPage() {
                <div style={{ padding: '4rem', textAlign: 'center', opacity: 0.4 }}>NO APPROVED TRANSACTIONS IN CURRENT SESSION</div>
             ) : (
                data.verifiedTeams.map((t: any, i: number) => (
-                  <div key={i} className="animate-scale-in" style={{ display: 'flex', justifyContent: 'space-between', padding: '1.5rem 2rem', background: '#FFF', border: '1px solid var(--rose-100)', borderRadius: '24px' }}>
-                     <div style={{ display: 'flex', alignItems: 'center', gap: '2rem' }}>
-                        <span style={{ fontWeight: 900, color: 'var(--rose-200)' }}>#{i+1}</span>
-                        <div>
-                           <div style={{ fontWeight: 800, textTransform: 'uppercase', fontSize: '1rem' }}>{t.team_name}</div>
+                  <div key={i} className="animate-scale-in" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1.25rem 1.5rem', background: '#FFF', border: '1px solid var(--rose-100)', borderRadius: '20px', flexWrap: 'wrap', gap: '1rem' }}>
+                     <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem', minWidth: 0 }}>
+                        <span style={{ fontWeight: 900, color: 'var(--rose-200)', flexShrink: 0 }}>#{i+1}</span>
+                        <div style={{ minWidth: 0 }}>
+                           <div style={{ fontWeight: 800, textTransform: 'uppercase', fontSize: '0.95rem', wordBreak: 'break-word' }}>{t.team_name}</div>
                            <div style={{ fontSize: '0.65rem', color: '#F43F5E', fontWeight: 800 }}>LEADER: {t.leader_name}</div>
                         </div>
                      </div>
-                     <div style={{ display: 'flex', alignItems: 'center', gap: '2rem', textAlign: 'right' }}>
-                        <div style={{ flexShrink: 0 }}>
-                           <div style={{ fontWeight: 900, fontSize: '1.2rem', color: '#F43F5E' }}>₹{data.revenue / data.approved}</div>
+                     <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem', flexShrink: 0 }}>
+                        <div style={{ textAlign: 'right' }}>
+                           <div style={{ fontWeight: 900, fontSize: '1.1rem', color: '#F43F5E' }}>₹{data.revenue / data.approved}</div>
                            <div style={{ fontSize: '0.5rem', color: '#059669', fontWeight: 900, textTransform: 'uppercase' }}>PAID ✓</div>
                         </div>
-                        <div style={{ fontSize: '0.8rem', fontWeight: 900, minWidth: '40px' }}>{t.mode}</div>
-                        <div style={{ width: '40px', height: '40px', background: 'var(--rose-50)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <div style={{ fontSize: '0.8rem', fontWeight: 900 }}>{t.mode}</div>
+                        <div style={{ width: '36px', height: '36px', background: 'var(--rose-50)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                            🛡️
                         </div>
                      </div>
@@ -78,7 +78,7 @@ export default function AuditPage() {
          </div>
       </div>
 
-      <div style={{ marginTop: '3rem', padding: '2rem', background: 'rgba(244, 63, 94, 0.03)', borderRadius: '24px', border: '1px solid rgba(244, 63, 94, 0.1)', textAlign: 'center' }}>
+      <div style={{ marginTop: '3rem', padding: 'clamp(1rem, 5vw, 2rem)', background: 'rgba(244, 63, 94, 0.03)', borderRadius: '24px', border: '1px solid rgba(244, 63, 94, 0.1)', textAlign: 'center' }}>
          <p style={{ fontSize: '0.75rem', color: 'var(--ff-muted)', margin: 0 }}>This portal serves as an official financial audit for <strong>Demon Darkness</strong> Season Competitive operations. Total revenue is derived from approved payment screenshots.</p>
       </div>
     </div>

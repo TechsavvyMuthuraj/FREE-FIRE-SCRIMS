@@ -35,7 +35,7 @@ export default function MatchListPage() {
         TEAM LIST MATCH
       </div>
 
-      <div style={{ display: 'flex', gap: '1rem', marginBottom: '3rem' }}>
+      <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '2rem', flexWrap: 'wrap' }}>
          <button 
            onClick={() => setActiveMode("CS")}
            className={`small-btn ${activeMode === 'CS' ? 'active-btn' : ''}`}
@@ -52,13 +52,13 @@ export default function MatchListPage() {
          </button>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(400px, 1fr))', gap: '2rem' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 340px), 1fr))', gap: '1.5rem' }}>
          {filteredMatches.length === 0 ? (
            <div style={{ gridColumn: '1/-1', padding: '5rem', textAlign: 'center', opacity: 0.4 }}>NO {activeMode} SESSIONS SCHEDULED</div>
          ) : (
            filteredMatches.map((m, idx) => (
              <div key={idx} className="dash-card modern-card animate-scale-in" style={{ padding: '2.5rem' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '2rem', borderBottom: '1px solid var(--rose-50)', paddingBottom: '1.5rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1.5rem', borderBottom: '1px solid var(--rose-50)', paddingBottom: '1.25rem', flexWrap: 'wrap', gap: '0.75rem' }}>
                    <div>
                       <div className="section-label" style={{ marginBottom: '0.2rem', color: 'var(--ff-primary)' }}>MATCH #{idx + 1} ({m.mode})</div>
                       <div style={{ fontWeight: 900, fontSize: '0.9rem' }}>{m.map_name.toUpperCase()} · {new Date(m.match_date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
@@ -93,7 +93,7 @@ export default function MatchListPage() {
                       )}
                    </div>
                 ) : (
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 180px), 1fr))', gap: '0.75rem' }}>
                      {m.match_squads?.map((entry: any, sIdx: number) => (
                         <div key={sIdx} style={{ display: 'flex', alignItems: 'center', gap: '1rem', padding: '0.8rem 1.2rem', background: 'var(--rose-50)', borderRadius: '12px' }}>
                            <span style={{ fontWeight: 900, fontSize: '0.7rem', color: 'var(--rose-200)', width: '25px' }}>{sIdx + 1}</span>

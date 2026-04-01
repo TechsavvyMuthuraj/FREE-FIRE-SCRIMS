@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { getAdminTeams, getSeasonLeaderboard, saveSquadResults, getAdminMatches, deleteMatchPointsByTeam } from "../actions";
 import Toast from "../../../components/Toast";
+import ConfirmModal from "../../../components/ConfirmModal";
 
 export default function ResultsPage() {
   const [teams, setTeams] = useState<any[]>([]);
@@ -18,6 +19,7 @@ export default function ResultsPage() {
   
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState<{msg: string, type: 'success' | 'error' | 'warning' | null}>({ msg: "", type: null });
+  const [purgeTeamName, setPurgeTeamName] = useState<string | null>(null);
 
   const notify = (msg: string, type: 'success' | 'error' | 'warning') => {
     setToast({ msg, type });
@@ -41,7 +43,7 @@ export default function ResultsPage() {
   useEffect(() => { loadData(); }, []);
 
   const addEntryRow = () => {
-    setEntries([...entries, { team_id: "", placement_rank: 0, kill_points: 0, placement_points: 0 }]);
+    setEntries([...entries, { team_id: "", placement_rank: 0, kill_points: 0, placement_points: 0, round_wins: 0 }]);
   };
 
   const updateEntry = (index: number, field: string, value: any) => {
@@ -49,11 +51,17 @@ export default function ResultsPage() {
     next[index][field] = value;
     
     if (field === 'placement_rank') {
+      const match = matches.find(m => m.id === selectedMatch);
+      const isCS = match?.mode === 'CS';
       const rank = parseInt(value) || 0;
-      if (rank >= 1 && rank <= 12) {
-        next[index]['placement_points'] = 13 - rank;
+      
+      if (isCS) {
+        if (rank === 1) next[index]['placement_points'] = 10;
+        else if (rank === 2) next[index]['placement_points'] = 5;
+        else next[index]['placement_points'] = 0;
       } else {
-        next[index]['placement_points'] = 0;
+        if (rank >= 1 && rank <= 12) next[index]['placement_points'] = 13 - rank;
+        else next[index]['placement_points'] = 0;
       }
     }
     setEntries(next);
@@ -74,14 +82,19 @@ export default function ResultsPage() {
   };
 
   const handleDeletePoints = async (teamName: string) => {
-    if (!confirm(`Permanently clear all season points for ${teamName}? This cannot be undone.`)) return;
+    setPurgeTeamName(teamName);
+  };
+
+  const confirmPurgePoints = async () => {
+    if (!purgeTeamName) return;
     try {
-        const success = await deleteMatchPointsByTeam(teamName);
+        const success = await deleteMatchPointsByTeam(purgeTeamName);
         if (success) {
             notify("PERFORMANCE DATA PURGED", "success");
             loadData();
         }
     } catch (err) { notify("PURGE FAILED", "error"); }
+    finally { setPurgeTeamName(null); }
   };
 
   const filteredLeaderboard = leaderboard.filter(lb => lb.name.toLowerCase().includes(search.toLowerCase()));
@@ -97,12 +110,12 @@ export default function ResultsPage() {
         SQUAD PERFORMANCE PORTAL
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1.4fr) minmax(0, 1fr)', gap: '2.5rem' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 340px), 1fr))', gap: '2rem' }}>
         
         {/* LOG SECTION */}
         <section>
           <div className="dash-card modern-card" style={{ padding: '2.5rem' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '2.5rem', alignItems: 'flex-start' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '2rem', alignItems: 'flex-start', flexWrap: 'wrap', gap: '0.75rem' }}>
                <div>
                   <div className="section-label">MATCH SESSION ENTRY</div>
                   <p style={{ fontSize: '0.7rem', color: 'var(--ff-muted)', marginTop: '0.5rem' }}>Log performance metrics for a specific match room.</p>
@@ -128,42 +141,58 @@ export default function ResultsPage() {
               </div>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '1.2rem' }}>
-                 <div style={{ display: 'grid', gridTemplateColumns: '2fr 0.8fr 0.8fr 0.8fr 1fr 0.3fr', gap: '1rem', padding: '0 1rem', fontSize: '0.6rem', fontWeight: 900, color: 'var(--ff-primary)', letterSpacing: '0.15em' }}>
-                    <span>TEAM LOG</span>
-                    <span>RANK</span>
-                    <span>KILLS</span>
-                    <span>PTS</span>
-                    <span style={{ textAlign: 'center' }}>TOTAL</span>
-                    <span></span>
+                 <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: `3.5fr 1fr 0.8fr ${matches.find(m => m.id === selectedMatch)?.mode === 'CS' ? '0.8fr' : ''} 0.8fr 1fr 0.3fr`, gap: '1rem', padding: '0 1.5rem', fontSize: '0.65rem', fontWeight: 900, color: 'var(--ff-primary)', letterSpacing: '0.15em', minWidth: '650px' }}>
+                     <span>SQUAD IDENTITY</span>
+                     <span>RANK</span>
+                     <span>KILLS</span>
+                     {matches.find(m => m.id === selectedMatch)?.mode === 'CS' && <span>ROUNDS</span>}
+                     <span>PTS</span>
+                     <span style={{ textAlign: 'center' }}>TOTAL</span>
+                     <span></span>
+                  </div>
                  </div>
-                 {entries.map((ent, idx) => (
-                    <div key={idx} style={{ display: 'grid', gridTemplateColumns: '2fr 0.8fr 0.8fr 0.8fr 1fr 0.3fr', gap: '1rem', alignItems: 'center', background: '#FFFFFF', padding: '1rem', borderRadius: '16px', border: '1px solid var(--rose-50)', boxShadow: '0 4px 12px rgba(0,0,0,0.02)' }}>
-                       <select 
-                        className="form-input" 
-                        value={ent.team_id} 
-                        onChange={e => updateEntry(idx, 'team_id', e.target.value)}
-                        style={{ border: 'none', background: 'var(--rose-50)' }}
-                       >
-                          <option value="">SELECT</option>
-                          {teams
-                            .filter(t => !entries.some((e, i) => e.team_id === t.id && i !== idx))
-                            .map(t => (
-                              <option key={t.id} value={t.id}>{t.team_name}</option>
-                            ))
-                          }
-                       </select>
-                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.2rem', position: 'relative', width: '90px' }}>
-                         <input className="form-input" type="number" value={ent.placement_rank} onChange={e => updateEntry(idx, 'placement_rank', parseInt(e.target.value))} style={{ border: 'none', background: 'var(--rose-50)', textAlign: 'left', padding: '0 2.5rem 0 1rem', width: '100%', fontWeight: 700 }} />
-                         <span style={{ fontSize: '0.65rem', opacity: 0.5, position: 'absolute', right: '10px', pointerEvents: 'none' }}>/12</span>
-                       </div>
-                       <input className="form-input" type="number" value={ent.kill_points} onChange={e => updateEntry(idx, 'kill_points', parseInt(e.target.value))} style={{ border: 'none', background: 'var(--rose-50)', textAlign: 'center', width: '70px', fontWeight: 700 }} />
-                       <input className="form-input" type="number" value={ent.placement_points} onChange={e => updateEntry(idx, 'placement_points', parseInt(e.target.value))} style={{ border: 'none', background: 'var(--rose-50)', textAlign: 'center', width: '70px', fontWeight: 700 }} />
-                       <div style={{ textAlign: 'center', fontWeight: 900, color: 'var(--ff-primary)', fontSize: '1.6rem', minWidth: '70px' }}>
-                          {(ent.kill_points || 0) + (ent.placement_points || 0)}
-                       </div>
-                       <button onClick={() => setEntries(entries.filter((_, i) => i !== idx))} style={{ background: 'none', border: 'none', color: '#F43F5E', fontWeight: 900, cursor: 'pointer', fontSize: '1.2rem' }}>×</button>
-                    </div>
-                 ))}
+                 {entries.map((ent, idx) => {
+                    const activeMatch = matches.find(m => m.id === selectedMatch);
+                    const isCS = activeMatch?.mode === 'CS';
+                    
+                    return (
+                      <div key={idx} style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: `3.5fr 1fr 0.8fr ${isCS ? '0.8fr' : ''} 0.8fr 1fr 0.3fr`, gap: '1rem', alignItems: 'center', background: '#FFFFFF', padding: '1rem 1.5rem', borderRadius: '16px', border: '1px solid var(--rose-50)', boxShadow: '0 4px 12px rgba(0,0,0,0.02)', minWidth: '650px' }}>
+                         <select 
+                          className="form-input" 
+                          value={ent.team_id} 
+                          onChange={e => updateEntry(idx, 'team_id', e.target.value)}
+                          style={{ border: '1px solid var(--rose-100)', background: '#FFF', color: '#000', fontWeight: 800, fontSize: '0.8rem', height: '48px', padding: '0 0.5rem', width: '100%', cursor: 'pointer' }}
+                         >
+                            <option value="">SELECT</option>
+                             {(() => {
+                               const match = matches.find(m => m.id === selectedMatch);
+                               const allowedIds = match?.match_squads?.map((s: any) => s.team_id) || [];
+                               return teams
+                                 .filter(t => allowedIds.includes(t.id))
+                                 .map(t => (
+                                   <option key={t.id} value={t.id}>{t.team_name.toUpperCase()}</option>
+                                 ));
+                             })()}
+                         </select>
+                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.2rem', position: 'relative', width: '100px' }}>
+                           <input className="form-input" type="number" value={ent.placement_rank} onChange={e => updateEntry(idx, 'placement_rank', parseInt(e.target.value))} style={{ border: '1px solid var(--rose-100)', background: '#FFF', textAlign: 'center', padding: '0 1.8rem 0 0.5rem', width: '100%', fontWeight: 800, color: '#000', fontSize: '1rem', height: '48px' }} />
+                           <span style={{ fontSize: '0.7rem', opacity: 0.6, position: 'absolute', right: '8px', pointerEvents: 'none', color: '#000', fontWeight: 800 }}>/{isCS ? '2' : '12'}</span>
+                         </div>
+                         <input className="form-input" type="number" value={ent.kill_points} onChange={e => updateEntry(idx, 'kill_points', parseInt(e.target.value))} style={{ border: '1px solid var(--rose-100)', background: '#FFF', textAlign: 'center', width: '70px', fontWeight: 800, color: '#000', fontSize: '0.9rem', height: '48px' }} />
+                         {isCS && (
+                           <input className="form-input" type="number" value={ent.round_wins || 0} onChange={e => updateEntry(idx, 'round_wins', parseInt(e.target.value))} style={{ border: '1px solid var(--rose-100)', background: '#FFF', textAlign: 'center', width: '70px', fontWeight: 800, color: '#000', fontSize: '0.9rem', height: '48px' }} />
+                         )}
+                         <input className="form-input" type="number" value={ent.placement_points} onChange={e => updateEntry(idx, 'placement_points', parseInt(e.target.value))} style={{ border: '1px solid var(--rose-100)', background: '#FFF', textAlign: 'center', width: '70px', fontWeight: 800, color: '#000', fontSize: '0.9rem', height: '48px' }} />
+                         <div style={{ textAlign: 'center', fontWeight: 900, color: 'var(--ff-primary)', fontSize: '1.6rem', minWidth: '70px' }}>
+                            {(ent.kill_points || 0) + (ent.placement_points || 0) + (ent.round_wins || 0)}
+                         </div>
+                         <button onClick={() => setEntries(entries.filter((_, i) => i !== idx))} style={{ background: 'none', border: 'none', color: '#F43F5E', fontWeight: 900, cursor: 'pointer', fontSize: '1.2rem' }}>×</button>
+                      </div>
+                      </div>
+                    );
+                  })}
                  <button className="btn-primary" style={{ marginTop: '1.5rem', height: '62px', background: 'var(--ff-primary)', color: '#000', border: 'none' }} onClick={handleCommit} disabled={saving}>
                     {saving ? "SYNCING RESULTS DATA..." : "COMMIT OFFICIAL MATCH DATA 📡"}
                  </button>
@@ -175,7 +204,7 @@ export default function ResultsPage() {
         {/* SEASON ANALYTICS PREVIEW */}
         <section>
           <div className="dash-card modern-card" style={{ padding: '2.5rem' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '2.5rem', alignItems: 'center' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '2rem', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem' }}>
                <div className="section-label" style={{ marginBottom: 0 }}>SEASON STANDING SUMMARY</div>
                <input 
                  className="search-input" 
@@ -191,7 +220,7 @@ export default function ResultsPage() {
                  <div style={{ opacity: 0.4, textAlign: 'center', padding: '4rem' }}>NO PERFORMANCE DATA LOGGED</div>
                ) : (
                  filteredLeaderboard.map((lb, i) => (
-                    <div key={i} className="animate-scale-in" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1.2rem 2rem', background: i < 1 ? 'linear-gradient(90deg, rgba(255,140,0,0.1), #FFF)' : '#FFF', border: '1px solid var(--rose-100)', borderRadius: '24px', position: 'relative' }}>
+                    <div key={i} className="animate-scale-in" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem 1.25rem', background: i < 1 ? 'linear-gradient(90deg, rgba(255,140,0,0.1), #FFF)' : '#FFF', border: '1px solid var(--rose-100)', borderRadius: '20px', position: 'relative', flexWrap: 'wrap', gap: '0.5rem' }}>
                        <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
                           <span style={{ fontWeight: 900, fontSize: '1.2rem', color: i === 0 ? '#F59E0B' : i === 1 ? '#94A3B8' : i === 2 ? '#B45309' : 'var(--rose-100)' }}>
                             {i === 0 ? '🏆' : i === 1 ? '🥈' : i === 2 ? '🥉' : `#${i+1}`}
@@ -225,6 +254,16 @@ export default function ResultsPage() {
           </div>
         </section>
       </div>
+
+      <ConfirmModal 
+        isOpen={!!purgeTeamName}
+        title="PURGE SQUAD POINTS?"
+        message={`This will permanently erase all leaderboard points and match history for ${purgeTeamName}. This action cannot be reversed.`}
+        onConfirm={confirmPurgePoints}
+        onCancel={() => setPurgeTeamName(null)}
+        confirmText="PURGE NOW"
+        type="danger"
+      />
     </div>
   );
 }

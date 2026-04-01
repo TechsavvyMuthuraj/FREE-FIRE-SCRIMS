@@ -5,12 +5,27 @@ import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import "./AdminLayout.css";
+import "./admin-responsive.css";
+
+const NAV_ITEMS = [
+  { href: "/admin/dashboard",   icon: "◈", label: "Overview" },
+  { href: "/admin/teams",       icon: "◉", label: "Team Management" },
+  { href: "/admin/schedule",    icon: "📅", label: "Team Schedule" },
+  { href: "/admin/match-lists", icon: "📑", label: "Team List Match" },
+  { href: "/admin/matches",     icon: "◆", label: "Match Control" },
+  { href: "/admin/results",     icon: "🏆", label: "Season Rankings" },
+  { href: "/admin/audit",       icon: "💰", label: "Financial Audit" },
+  { href: "/admin/content",     icon: "✎", label: "Site Content" },
+  { href: "/admin/settings",    icon: "⚙", label: "Global Settings" },
+  { href: "/admin/payments",    icon: "💳", label: "Payment Settings" },
+];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
   const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
     const checkAuth = () => {
@@ -22,82 +37,62 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       }
       setLoading(false);
     };
-
     checkAuth();
   }, [pathname, router]);
+
+  // Close sidebar on route change (mobile)
+  useEffect(() => {
+    setSidebarOpen(false);
+  }, [pathname]);
 
   const handleLogout = () => {
     localStorage.removeItem("ffscrims_admin");
     router.push("/admin/login");
   };
 
-  // Skip layout wrapper for the login page specifically
-  if (pathname === "/admin/login") {
-    return <>{children}</>;
-  }
-
-  if (loading) return <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><div className="hero-badge">Verifying Admin Access...</div></div>;
+  if (pathname === "/admin/login") return <>{children}</>;
+  if (loading) return (
+    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div className="hero-badge">Verifying Admin Access...</div>
+    </div>
+  );
   if (!isAdmin) return null;
 
   return (
     <div className="admin-layout" id="page-admin">
+
+      {/* MOBILE OVERLAY — closes sidebar when tapping outside */}
+      {sidebarOpen && (
+        <div className="sidebar-overlay" onClick={() => setSidebarOpen(false)} />
+      )}
+
       {/* SIDEBAR */}
-      <div className="admin-sidebar" style={{ display: 'flex', flexDirection: 'column' }}>
-        <div style={{ padding: '1.5rem 1.5rem 0.5rem' }}>
-          <Link href="/" style={{ 
-            display: 'inline-flex', 
-            alignItems: 'center', 
-            gap: '0.5rem', 
-            fontFamily: 'var(--font-mono)', 
-            fontSize: '0.65rem', 
-            letterSpacing: '0.1em', 
-            color: 'var(--ff-primary)', 
-            textDecoration: 'none',
-            fontWeight: 800,
-            padding: '0.5rem 0.75rem',
-            background: 'rgba(255, 140, 0, 0.1)',
-            borderRadius: '6px',
-            transition: 'all 0.2s'
-          }} className="back-website-btn">
+      <div className={`admin-sidebar ${sidebarOpen ? "sidebar-open" : ""}`}>
+        {/* Sidebar header */}
+        <div className="sidebar-header">
+          <Link href="/" className="back-website-btn">
             ← BACK TO WEBSITE
           </Link>
+          {/* Close button (mobile only) */}
+          <button className="sidebar-close-btn" onClick={() => setSidebarOpen(false)}>✕</button>
         </div>
-        <div style={{ padding: '1.5rem 1.5rem 1rem', fontFamily: 'var(--font-mono)', fontSize: '0.6rem', letterSpacing: '0.2em', color: 'var(--ff-muted)', textTransform: 'uppercase' }}>Navigation</div>
-        
-        <Link href="/admin/dashboard" className={`sidebar-item ${pathname === "/admin/dashboard" ? "active" : ""}`}>
-          <span className="sidebar-icon">◈</span> Overview
-        </Link>
-        <Link href="/admin/teams" className={`sidebar-item ${pathname === "/admin/teams" ? "active" : ""}`}>
-          <span className="sidebar-icon">◉</span> Team Management
-        </Link>
-        <Link href="/admin/schedule" className={`sidebar-item ${pathname === "/admin/schedule" ? "active" : ""}`}>
-          <span className="sidebar-icon">📅</span> Team Schedule
-        </Link>
-        <Link href="/admin/match-lists" className={`sidebar-item ${pathname === "/admin/match-lists" ? "active" : ""}`}>
-          <span className="sidebar-icon">📑</span> Team List Match
-        </Link>
-        <Link href="/admin/matches" className={`sidebar-item ${pathname === "/admin/matches" ? "active" : ""}`}>
-          <span className="sidebar-icon">◆</span> Match Control
-        </Link>
-        <Link href="/admin/results" className={`sidebar-item ${pathname === "/admin/results" ? "active" : ""}`}>
-          <span className="sidebar-icon">🏆</span> Season Rankings
-        </Link>
-        <Link href="/admin/audit" className={`sidebar-item ${pathname === "/admin/audit" ? "active" : ""}`}>
-          <span className="sidebar-icon">💰</span> Financial Audit
-        </Link>
-        <Link href="/admin/content" className={`sidebar-item ${pathname === "/admin/content" ? "active" : ""}`}>
-          <span className="sidebar-icon">✎</span> Site Content
-        </Link>
-        <Link href="/admin/settings" className={`sidebar-item ${pathname === "/admin/settings" ? "active" : ""}`}>
-          <span className="sidebar-icon">⚙</span> Global Settings
-        </Link>
-        <Link href="/admin/payments" className={`sidebar-item ${pathname === "/admin/payments" ? "active" : ""}`}>
-          <span className="sidebar-icon">💳</span> Payment Settings
-        </Link>
+
+        <div className="sidebar-nav-label">Navigation</div>
+
+        {NAV_ITEMS.map((item) => (
+          <Link
+            key={item.href}
+            href={item.href}
+            className={`sidebar-item ${pathname === item.href ? "active" : ""}`}
+          >
+            <span className="sidebar-icon">{item.icon}</span>
+            <span className="sidebar-item-label">{item.label}</span>
+          </Link>
+        ))}
 
         {/* LOGOUT */}
-        <div style={{ marginTop: 'auto', padding: '1rem 1.5rem', borderTop: '1px solid var(--ff-border)' }}>
-          <div onClick={handleLogout} style={{ fontFamily: 'var(--font-mono)', fontSize: '0.65rem', letterSpacing: '0.1em', color: 'var(--ff-muted)', cursor: 'pointer', transition: 'color 0.15s' }}>
+        <div className="sidebar-logout">
+          <div onClick={handleLogout} className="logout-btn">
             ← LOGOUT EXIT
           </div>
         </div>
@@ -105,6 +100,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
       {/* MAIN CONTENT */}
       <div className="admin-main">
+        {/* MOBILE TOP BAR */}
+        <div className="mobile-topbar">
+          <button className="hamburger-btn" onClick={() => setSidebarOpen(true)}>
+            ☰
+          </button>
+          <span className="mobile-topbar-title">⚡ DEMON X ADMIN</span>
+        </div>
+
         {children}
       </div>
     </div>

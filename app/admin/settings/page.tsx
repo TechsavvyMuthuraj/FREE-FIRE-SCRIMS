@@ -55,8 +55,8 @@ export default function SettingsPage() {
         GLOBAL CONFIGURATION
       </div>
 
-      <div className="dash-card modern-card" style={{ padding: '3rem' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '3rem' }}>
+      <div className="dash-card modern-card" style={{ padding: 'clamp(1.5rem, 4vw, 3rem)' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 280px), 1fr))', gap: 'clamp(1.5rem, 4vw, 3rem)' }}>
           
           {/* COMMUNICATION LINKS */}
           <section>
@@ -121,10 +121,10 @@ export default function SettingsPage() {
           </section>
         </div>
 
-        <div style={{ marginTop: '4rem', borderTop: '1px solid var(--rose-100)', paddingTop: '2.5rem', display: 'flex', justifyContent: 'flex-end' }}>
+        <div style={{ marginTop: '3rem', borderTop: '1px solid var(--rose-100)', paddingTop: '2rem', display: 'flex', justifyContent: 'flex-end', flexWrap: 'wrap', gap: '1rem' }}>
           <button 
             className="btn-primary" 
-            style={{ padding: '1rem 4rem', height: '52px' }}
+            style={{ padding: '1rem 3rem', height: '52px', width: 'min(100%, 300px)' }}
             onClick={handleSave}
             disabled={saving}
           >

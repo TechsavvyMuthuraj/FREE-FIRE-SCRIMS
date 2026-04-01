@@ -71,7 +71,6 @@ export async function getAdminMatches() {
   if (error) throw error;
   return data || [];
 }
-
 export async function createMatch(matchData: any) {
   try {
     if (!matchData.date_time) throw new Error("Match date/time is required.");
@@ -94,9 +93,13 @@ export async function createMatch(matchData: any) {
 
     if (mError) throw new Error(mError.message);
 
-    // Link squads if any
+    // Link unique squads (strictly limited by mode capacity)
     if (matchData.team_ids && matchData.team_ids.length > 0 && mData) {
-        const links = matchData.team_ids.map((tid: string) => ({
+        const uniqueTeamIds = Array.from(new Set(matchData.team_ids)) as string[];
+        const limit = (matchData.mode === "CS") ? 2 : 12;
+        const cappedIds = uniqueTeamIds.slice(0, limit);
+        
+        const links = cappedIds.map((tid: string) => ({
             match_id: mData.id,
             team_id: tid
         }));
@@ -110,16 +113,35 @@ export async function createMatch(matchData: any) {
   }
 }
 
+export async function updateMatchStatus(id: string, status: string) {
+  const { error } = await supabaseAdmin.from("matches").update({ status }).eq("id", id);
+  if (error) throw error;
+  return true;
+}
+
 export async function getMatchSquads(match_id: string) {
     const { data, error } = await supabaseAdmin
         .from("match_squads")
         .select(`
             team_id,
-            teams (team_name, leader_name, mode)
+            teams (
+              *,
+              players (in_game_name, game_uid)
+            )
         `)
         .eq("match_id", match_id);
     if (error) throw error;
     return data || [];
+}
+
+export async function getLandingRulesByMode(mode: string) {
+  const { data, error } = await supabaseAdmin
+    .from("landing_rules")
+    .select("*")
+    .eq("mode", mode)
+    .order("rule_number", { ascending: true });
+  if (error) return [];
+  return data;
 }
 
 export async function deleteMatch(id: string) {
@@ -307,14 +329,13 @@ export async function updateGlobalSettings(updates: any) {
   return true;
 }
 
-export async function getApprovedSquadsForMatch(mode: string, limit: number = 12) {
+export async function getApprovedSquadsForMatch(mode: string) {
     const { data, error } = await supabaseAdmin
         .from("teams")
         .select("*")
         .eq("mode", mode)
         .eq("payment_status", "approved")
-        .order("created_at", { ascending: true })
-        .limit(limit);
+        .order("created_at", { ascending: true });
 
     if (error) throw error;
     return data || [];
@@ -350,11 +371,11 @@ export async function getMatchDetails(matchId: string) {
 }
 
 export async function saveSquadResults(matchId: string, results: any[]) {
-  // results = [{ team_id, placement_rank, kill_points, placement_points }]
+  // results = [{ team_id, placement_rank, kill_points, placement_points, round_wins }]
   const toInsert = results.map(r => ({
     ...r,
     match_id: matchId,
-    total_points: (Number(r.kill_points) || 0) + (Number(r.placement_points) || 0)
+    total_points: (Number(r.kill_points) || 0) + (Number(r.placement_points) || 0) + (Number(r.round_wins) || 0)
   }));
 
   const { error } = await supabaseAdmin.from("match_points").insert(toInsert);
@@ -366,7 +387,20 @@ export async function saveSquadResults(matchId: string, results: any[]) {
 }
 
 export async function linkSquadsToMatch(matchId: string, teamIds: string[]) {
-  const links = teamIds.map(tid => ({
+  // Verify match mode limit first
+  const { data: match } = await supabaseAdmin.from("matches").select("mode").eq("id", matchId).single();
+  const limit = (match?.mode === "CS") ? 2 : 12;
+  
+  if (teamIds.length > limit) {
+    throw new Error(`ROOM FULL: THIS ${match?.mode} MATCH ONLY ALLOWS ${limit} SQUADS.`);
+  }
+
+  const uniqueTeamIds = Array.from(new Set(teamIds)) as string[];
+  
+  // Clean slate: Delete existing links for this match first
+  await supabaseAdmin.from("match_squads").delete().eq("match_id", matchId);
+
+  const links = uniqueTeamIds.map(tid => ({
     match_id: matchId,
     team_id: tid
   }));
